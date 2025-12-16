@@ -39,11 +39,20 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <p class="text-sm text-gray-500">Tên khách hàng</p>
-                        <p class="font-medium">{{ $order->customer->name }}</p>
+                        <p class="font-medium"><a target="_blank" href="{{ route('customers.edit', $order->customer) }}">{{ $order->customer->name }}</a></p>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500">Số điện thoại</p>
-                        <p class="font-medium">{{ $order->customer->phone ?? '-' }}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="font-medium">{{ $order->customer->phone ?? '-' }}</p>
+                            @if($order->customer->phone)
+                            <button onclick="copyToClipboard('{{ $order->customer->phone }}')" 
+                                    class="text-gray-400 hover:text-indigo-600 transition"
+                                    title="Copy số điện thoại">
+                                <i class="fas fa-copy text-sm"></i>
+                            </button>
+                            @endif
+                        </div>
                     </div>
                     <div>
                         <p class="text-sm text-gray-500">Email</p>
@@ -51,7 +60,16 @@
                     </div>
                     <div>
                         <p class="text-sm text-gray-500">Địa chỉ</p>
-                        <p class="font-medium">{{ $order->customer->address ?? '-' }}</p>
+                        <div class="flex items-center gap-2">
+                            <p class="font-medium">{{ $order->customer->address ?? '-' }}</p>
+                            @if($order->customer->address)
+                            <button onclick="copyToClipboard('{{ $order->customer->address }}')" 
+                                    class="text-gray-400 hover:text-indigo-600 transition flex-shrink-0"
+                                    title="Copy địa chỉ">
+                                <i class="fas fa-copy text-sm"></i>
+                            </button>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -256,6 +274,22 @@ function updateStatus(status) {
         if (data.success) {
             location.reload();
         }
+    });
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Hiển thị thông báo thành công
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2';
+        toast.innerHTML = '<i class="fas fa-check-circle"></i> Đã copy!';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 2000);
+    }).catch(err => {
+        console.error('Không thể copy:', err);
     });
 }
 </script>
