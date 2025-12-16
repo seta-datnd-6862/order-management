@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Order extends Model
 {
@@ -10,9 +12,17 @@ class Order extends Model
         'customer_id',
         'status',
         'total_amount',
+        'deposit_amount',
         'note',
+        'shipping_code',
+        'shipping_image',
         'created_at',
         'updated_at',
+    ];
+
+    protected $casts = [
+        'total_amount' => 'decimal:2',
+        'deposit_amount' => 'decimal:2',
     ];
 
     const STATUS_NEW = 'new';
@@ -64,6 +74,28 @@ class Order extends Model
     public function getStatusColorAttribute()
     {
         return self::getStatusColors()[$this->status] ?? 'bg-gray-100 text-gray-800';
+    }
+
+    // Accessors
+    public function getShippingImageUrlAttribute()
+    {
+        if ($this->shipping_image) {
+            return Storage::url($this->shipping_image);
+        }
+        return null;
+    }
+
+    public function getRemainingAmountAttribute()
+    {
+        return $this->total_amount - $this->deposit_amount;
+    }
+
+    public function getDepositPercentageAttribute()
+    {
+        if ($this->total_amount > 0) {
+            return ($this->deposit_amount / $this->total_amount) * 100;
+        }
+        return 0;
     }
 
     public function calculateTotal()

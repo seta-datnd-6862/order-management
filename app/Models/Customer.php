@@ -12,6 +12,7 @@ class Customer extends Model
         'facebook_link',
         'zalo_link',
         'note',
+        'address',
     ];
 
     public function orders()

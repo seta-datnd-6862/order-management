@@ -37,6 +37,7 @@ class CustomerController extends Controller
             'facebook_link' => 'nullable|string|max:500',
             'zalo_link' => 'nullable|string|max:500',
             'note' => 'nullable|string',
+            'address' => 'nullable|string',
         ]);
 
         Customer::create($validated);
@@ -58,6 +59,7 @@ class CustomerController extends Controller
             'facebook_link' => 'nullable|string|max:500',
             'zalo_link' => 'nullable|string|max:500',
             'note' => 'nullable|string',
+            'address' => 'nullable|string',
         ]);
 
         $customer->update($validated);

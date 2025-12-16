@@ -55,11 +55,64 @@
                         </div>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Số tiền đã cọc
+                        </label>
+                        <input type="number" 
+                               name="deposit_amount" 
+                               value="{{ old('deposit_amount', $order->deposit_amount) }}"
+                               min="0"
+                               step="1000"
+                               placeholder="0"
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <p class="mt-1 text-xs text-gray-500">Nhập số tiền khách hàng đã đặt cọc cho đơn hàng này</p>
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú đơn hàng</label>
                         <textarea name="note" rows="2"
                                   class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
                                   placeholder="Ghi chú cho đơn hàng...">{{ old('note', $order->note) }}</textarea>
+                    </div>
+                </div>
+
+                <!-- Shipping Info -->
+                <div class="bg-white rounded-lg shadow p-6">
+                    <h2 class="text-lg font-semibold mb-4">
+                        <i class="fas fa-shipping-fast mr-2 text-indigo-600"></i>Thông tin vận chuyển
+                    </h2>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Mã vận chuyển
+                        </label>
+                        <input type="text" 
+                               name="shipping_code" 
+                               value="{{ old('shipping_code', $order->shipping_code) }}"
+                               placeholder="Nhập mã vận chuyển..."
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Ảnh mã vận chuyển
+                        </label>
+                        <div class="space-y-3">
+                            @if($order->shipping_image)
+                            <div class="relative inline-block">
+                                <img src="{{ $order->shipping_image_url }}" 
+                                     alt="Shipping Image" 
+                                     class="w-32 h-32 object-cover rounded-lg border">
+                                <p class="mt-1 text-xs text-gray-500">Ảnh hiện tại</p>
+                            </div>
+                            @endif
+                            <input type="file" 
+                                   name="shipping_image" 
+                                   accept="image/*"
+                                   class="block w-full px-3 py-2 border rounded-lg text-sm">
+                            <p class="text-xs text-gray-500">Upload ảnh mới nếu muốn thay đổi</p>
+                        </div>
                     </div>
                 </div>
 
@@ -148,20 +201,6 @@
                                                min="0" 
                                                required
                                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                    </div>
-
-                                    <div class="md:col-span-2">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh sản phẩm</label>
-                                        <div class="flex items-center space-x-4">
-                                            <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-                                                <template x-if="item.preview || item.currentImage || item.productImage">
-                                                    <img :src="item.preview || item.currentImage || item.productImage" class="w-full h-full object-cover">
-                                                </template>
-                                                <template x-if="!item.preview && !item.currentImage && !item.productImage">
-                                                    <i class="fas fa-image text-xl text-gray-400"></i>
-                                                </template>
-                                            </div>
-                                        </div>
                                     </div>
 
                                     <!-- Image -->

@@ -56,66 +56,84 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
+            'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
+            'deposit_amount' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
+            'shipping_code' => 'nullable|string|max:255',
+            'shipping_image' => 'nullable|image|max:5120', // 5MB
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.size' => 'required|string',
+            'items.*.size' => 'required|in:' . implode(',', OrderItem::getSizes()),
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
-            'items.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'items.*.note' => 'nullable|string',
+            'items.*.image' => 'nullable|image|max:5120',
         ]);
-
-        $createdAt = $request->input('created_at', null);
-
-        if (!$createdAt) {
-            $createdAt = now()->startOfDay();
-        } else {
-            $createdAt = Carbon::parse($createdAt)->startOfDay();
-        }
 
         DB::beginTransaction();
         try {
+            // Tính tổng tiền
+            $totalAmount = 0;
+            foreach ($validated['items'] as $item) {
+                $totalAmount += $item['price'] * $item['quantity'];
+            }
+
+            // Upload shipping image nếu có
+            $shippingImagePath = null;
+            if ($request->hasFile('shipping_image')) {
+                $shippingImagePath = $request->file('shipping_image')->store('shipping_images', 'public');
+            }
+
+            // Tạo đơn hàng
             $order = Order::create([
                 'customer_id' => $validated['customer_id'],
-                'status' => Order::STATUS_NEW,
-                'note' => $validated['note'] ?? null,
-                'created_at' => $createdAt,
+                'status' => $validated['status'],
+                'total_amount' => $totalAmount,
+                'deposit_amount' => $validated['deposit_amount'] ?? 0,
+                'note' => $validated['note'],
+                'shipping_code' => $validated['shipping_code'],
+                'shipping_image' => $shippingImagePath,
             ]);
 
-            foreach ($validated['items'] as $index => $itemData) {
-                $itemImage = null;
-                if ($request->hasFile("items.{$index}.image")) {
-                    $itemImage = $request->file("items.{$index}.image")->store('order-items', 'public');
+            // Tạo các item
+            foreach ($validated['items'] as $itemData) {
+                $imagePath = null;
+                if (isset($itemData['image']) && $itemData['image']) {
+                    $imagePath = $itemData['image']->store('order_items', 'public');
                 }
 
-                OrderItem::create([
-                    'order_id' => $order->id,
+                $order->items()->create([
                     'product_id' => $itemData['product_id'],
                     'size' => $itemData['size'],
                     'quantity' => $itemData['quantity'],
                     'price' => $itemData['price'],
-                    'image' => $itemImage,
                     'note' => $itemData['note'] ?? null,
+                    'image' => $imagePath,
                 ]);
             }
 
-            $order->calculateTotal();
-            
             DB::commit();
 
-            return redirect()->route('orders.index')
+            return redirect()
+                ->route('orders.show', $order)
                 ->with('success', 'Tạo đơn hàng thành công!');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage())->withInput();
+            return back()
+                ->withInput()
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }
 
     public function show(Order $order)
     {
         $order->load(['customer', 'items.product']);
-        return view('orders.show', compact('order'));
+
+        return view('orders.show', [
+            'order' => $order,
+            'statuses' => Order::getStatuses(),
+        ]);
     }
 
     public function edit(Order $order)
@@ -134,37 +152,72 @@ class OrderController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
+            'deposit_amount' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
+            'shipping_code' => 'nullable|string|max:255',
+            'shipping_image' => 'nullable|image|max:5120',
             'items' => 'required|array|min:1',
             'items.*.id' => 'nullable|exists:order_items,id',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.size' => 'required|string',
+            'items.*.size' => 'required|in:' . implode(',', OrderItem::getSizes()),
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.price' => 'required|numeric|min:0',
-            'items.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'items.*.note' => 'nullable|string',
+            'items.*.image' => 'nullable|image|max:5120',
         ]);
 
         DB::beginTransaction();
         try {
+            // Tính tổng tiền mới
+            $totalAmount = 0;
+            foreach ($validated['items'] as $item) {
+                $totalAmount += $item['price'] * $item['quantity'];
+            }
+
+            // Upload shipping image mới nếu có
+            $shippingImagePath = $order->shipping_image;
+            if ($request->hasFile('shipping_image')) {
+                // Xóa ảnh cũ
+                if ($order->shipping_image) {
+                    Storage::disk('public')->delete($order->shipping_image);
+                }
+                $shippingImagePath = $request->file('shipping_image')->store('shipping_images', 'public');
+            }
+
+            // Cập nhật đơn hàng
             $order->update([
                 'customer_id' => $validated['customer_id'],
                 'status' => $validated['status'],
-                'note' => $validated['note'] ?? null,
+                'total_amount' => $totalAmount,
+                'deposit_amount' => $validated['deposit_amount'] ?? 0,
+                'note' => $validated['note'],
+                'shipping_code' => $validated['shipping_code'],
+                'shipping_image' => $shippingImagePath,
             ]);
 
-            $existingItemIds = $order->items->pluck('id')->toArray();
-            $updatedItemIds = [];
+            // Lấy danh sách ID items hiện tại
+            $existingItemIds = [];
 
-            foreach ($validated['items'] as $index => $itemData) {
-                $itemImage = null;
-                if ($request->hasFile("items.{$index}.image")) {
-                    $itemImage = $request->file("items.{$index}.image")->store('order-items', 'public');
+            // Cập nhật/tạo items
+            foreach ($validated['items'] as $itemData) {
+                $imagePath = null;
+                
+                // Xử lý upload ảnh mới
+                if (isset($itemData['image']) && $itemData['image']) {
+                    // Nếu item đã tồn tại, xóa ảnh cũ
+                    if (isset($itemData['id'])) {
+                        $existingItem = $order->items()->find($itemData['id']);
+                        if ($existingItem && $existingItem->image) {
+                            Storage::disk('public')->delete($existingItem->image);
+                        }
+                    }
+                    $imagePath = $itemData['image']->store('order_items', 'public');
                 }
 
-                if (!empty($itemData['id'])) {
-                    $item = OrderItem::find($itemData['id']);
-                    if ($item && $item->order_id === $order->id) {
+                if (isset($itemData['id']) && $itemData['id']) {
+                    // Cập nhật item có sẵn
+                    $item = $order->items()->find($itemData['id']);
+                    if ($item) {
                         $updateData = [
                             'product_id' => $itemData['product_id'],
                             'size' => $itemData['size'],
@@ -172,62 +225,79 @@ class OrderController extends Controller
                             'price' => $itemData['price'],
                             'note' => $itemData['note'] ?? null,
                         ];
-                        if ($itemImage) {
-                            if ($item->image) {
-                                Storage::disk('public')->delete($item->image);
-                            }
-                            $updateData['image'] = $itemImage;
+                        
+                        if ($imagePath) {
+                            $updateData['image'] = $imagePath;
                         }
+                        
                         $item->update($updateData);
-                        $updatedItemIds[] = $item->id;
+                        $existingItemIds[] = $item->id;
                     }
                 } else {
-                    $item = OrderItem::create([
-                        'order_id' => $order->id,
+                    // Tạo item mới
+                    $newItem = $order->items()->create([
                         'product_id' => $itemData['product_id'],
                         'size' => $itemData['size'],
                         'quantity' => $itemData['quantity'],
                         'price' => $itemData['price'],
-                        'image' => $itemImage,
                         'note' => $itemData['note'] ?? null,
+                        'image' => $imagePath,
                     ]);
-                    $updatedItemIds[] = $item->id;
+                    $existingItemIds[] = $newItem->id;
                 }
             }
 
-            $itemsToDelete = array_diff($existingItemIds, $updatedItemIds);
-            foreach ($itemsToDelete as $itemId) {
-                $item = OrderItem::find($itemId);
-                if ($item && $item->image) {
+            // Xóa các items không còn trong danh sách
+            $order->items()->whereNotIn('id', $existingItemIds)->each(function ($item) {
+                if ($item->image) {
                     Storage::disk('public')->delete($item->image);
                 }
-            }
-            OrderItem::whereIn('id', $itemsToDelete)->delete();
+                $item->delete();
+            });
 
-            $order->calculateTotal();
-            
             DB::commit();
 
-            return redirect()->route('orders.index')
+            return redirect()
+                ->route('orders.show', $order)
                 ->with('success', 'Cập nhật đơn hàng thành công!');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage())->withInput();
+            return back()
+                ->withInput()
+                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
     }
 
     public function destroy(Order $order)
     {
-        foreach ($order->items as $item) {
-            if ($item->image) {
-                Storage::disk('public')->delete($item->image);
+        DB::beginTransaction();
+        try {
+            // Xóa ảnh shipping
+            if ($order->shipping_image) {
+                Storage::disk('public')->delete($order->shipping_image);
             }
+
+            // Xóa ảnh các items
+            foreach ($order->items as $item) {
+                if ($item->image) {
+                    Storage::disk('public')->delete($item->image);
+                }
+            }
+
+            // Xóa order (items sẽ tự động xóa do cascade)
+            $order->delete();
+
+            DB::commit();
+
+            return redirect()
+                ->route('orders.index')
+                ->with('success', 'Xóa đơn hàng thành công!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
         }
-        
-        $order->delete();
-        
-        return redirect()->route('orders.index')
-            ->with('success', 'Xóa đơn hàng thành công!');
     }
 
     public function updateStatus(Request $request, Order $order)
