@@ -34,7 +34,7 @@
         <div class="aspect-square bg-gray-100 relative">
             @if($product->image)
             <img src="{{ $product->image_url }}" alt="{{ $product->name }}" 
-                 class="w-full h-full object-cover">
+                 class="w-full object-cover">
             @else
             <div class="w-full h-full flex items-center justify-center text-gray-400">
                 <i class="fas fa-image text-4xl"></i>
@@ -43,6 +43,13 @@
         </div>
         <div class="p-4">
             <h3 class="font-medium text-gray-900 truncate">{{ $product->name }}</h3>
+            <p class="text-xs text-gray-400 mt-1" >{{ $product->product_code }}
+                <button onclick="copyToClipboard('{{ $product->product_code }}')" 
+                        class="text-gray-400 hover:text-indigo-600 transition flex-shrink-0"
+                        title="Copy mã sản phẩm">
+                    <i class="fas fa-copy text-sm"></i>
+                </button>
+            </p>
             <p class="text-sm text-gray-500 mt-1">
                 {{ number_format($product->default_price) }}đ
             </p>

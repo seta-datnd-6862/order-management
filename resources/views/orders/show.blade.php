@@ -276,22 +276,6 @@ function updateStatus(status) {
         }
     });
 }
-
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        // Hiển thị thông báo thành công
-        const toast = document.createElement('div');
-        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center gap-2';
-        toast.innerHTML = '<i class="fas fa-check-circle"></i> Đã copy!';
-        document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.remove();
-        }, 2000);
-    }).catch(err => {
-        console.error('Không thể copy:', err);
-    });
-}
 </script>
 @endpush
 @endsection

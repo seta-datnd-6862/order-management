@@ -18,6 +18,11 @@ class Product extends Model
         return $this->hasMany(OrderItem::class);
     }
 
+    public function getProductCodeAttribute()
+    {
+        return 'KBC' . str_pad($this->id, 6, '0', STR_PAD_LEFT);
+    }
+
     public function getImageUrlAttribute()
     {
         if ($this->image) {

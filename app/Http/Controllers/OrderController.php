@@ -56,7 +56,6 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
             'deposit_amount' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
             'shipping_code' => 'nullable|string|max:255',
@@ -87,11 +86,11 @@ class OrderController extends Controller
             // Tạo đơn hàng
             $order = Order::create([
                 'customer_id' => $validated['customer_id'],
-                'status' => $validated['status'],
+                'status' => Order::STATUS_NEW,
                 'total_amount' => $totalAmount,
                 'deposit_amount' => $validated['deposit_amount'] ?? 0,
-                'note' => $validated['note'],
-                'shipping_code' => $validated['shipping_code'],
+                'note' => $validated['note'] ?? null,
+                'shipping_code' => $validated['shipping_code'] ?? null,
                 'shipping_image' => $shippingImagePath,
             ]);
 
@@ -151,7 +150,6 @@ class OrderController extends Controller
     {
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
-            'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
             'deposit_amount' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
             'shipping_code' => 'nullable|string|max:255',
@@ -187,11 +185,10 @@ class OrderController extends Controller
             // Cập nhật đơn hàng
             $order->update([
                 'customer_id' => $validated['customer_id'],
-                'status' => $validated['status'],
                 'total_amount' => $totalAmount,
                 'deposit_amount' => $validated['deposit_amount'] ?? 0,
-                'note' => $validated['note'],
-                'shipping_code' => $validated['shipping_code'],
+                'note' => $validated['note'] ?? null,
+                'shipping_code' => $validated['shipping_code'] ?? null,
                 'shipping_image' => $shippingImagePath,
             ]);
 
