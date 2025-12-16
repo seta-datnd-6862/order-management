@@ -150,6 +150,20 @@
                                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
                                     </div>
 
+                                    <div class="md:col-span-2">
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh sản phẩm</label>
+                                        <div class="flex items-center space-x-4">
+                                            <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                                                <template x-if="item.preview || item.currentImage || item.productImage">
+                                                    <img :src="item.preview || item.currentImage || item.productImage" class="w-full h-full object-cover">
+                                                </template>
+                                                <template x-if="!item.preview && !item.currentImage && !item.productImage">
+                                                    <i class="fas fa-image text-xl text-gray-400"></i>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     <!-- Image -->
                                     <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh sản phẩm</label>
@@ -230,23 +244,29 @@
     </form>
 </div>
 
+<?php  
+    $orderItems = $order->items->map(function($item) {
+        return [
+            'id' => $item->id,
+            'product_id' => (string)$item->product_id,
+            'size' => $item->size,
+            'quantity' => $item->quantity,
+            'price' => $item->price,
+            'note' => $item->note ?? '',
+            'preview' => null,
+            'currentImage' => $item->image_url,
+            'productImage' => $item->product->image_url,
+        ];
+    });
+?>
 @push('scripts')
 <script>
+// Convert PHP data to JSON
+const orderItemsData = @json($orderItems);
+
 function orderForm() {
     return {
-        items: @json($order->items->map(function($item) {
-            return [
-                'id' => $item->id,
-                'product_id' => (string)$item->product_id,
-                'size' => $item->size,
-                'quantity' => $item->quantity,
-                'price' => $item->price,
-                'note' => $item->note ?? '',
-                'preview' => null,
-                'currentImage' => $item->image_url,
-                'productImage' => $item->product->image_url,
-            ];
-        })),
+        items: orderItemsData,
         
         addItem() {
             this.items.push({ id: null, product_id: '', size: '', quantity: 1, price: 0, note: '', preview: null, currentImage: null, productImage: null });

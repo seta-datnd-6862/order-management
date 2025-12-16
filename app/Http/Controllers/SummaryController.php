@@ -64,4 +64,42 @@ class SummaryController extends Controller
             'date'
         ));
     }
+
+    public function moveToNextStatus(Request $request)
+    {
+        $currentStatus = $request->input('current_status');
+        $date = $request->input('date');
+
+        $statusFlow = [
+            Order::STATUS_NEW => Order::STATUS_PREPARING,
+            Order::STATUS_PREPARING => Order::STATUS_ORDERED,
+            Order::STATUS_ORDERED => Order::STATUS_SHIPPING,
+            Order::STATUS_SHIPPING => Order::STATUS_DELIVERED,
+        ];
+
+        if (!isset($statusFlow[$currentStatus])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể chuyển trạng thái tiếp theo cho trạng thái này.'
+            ]);
+        }
+
+        $nextStatus = $statusFlow[$currentStatus];
+
+        $query = Order::where('status', $currentStatus);
+        
+        if ($date) {
+            $query->whereDate('created_at', $date);
+        }
+
+        $count = $query->count();
+        $query->update(['status' => $nextStatus]);
+
+        $statuses = Order::getStatuses();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Đã chuyển {$count} đơn hàng sang trạng thái \"{$statuses[$nextStatus]}\"."
+        ]);
+    }
 }

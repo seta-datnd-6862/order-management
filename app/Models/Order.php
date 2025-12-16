@@ -11,6 +11,8 @@ class Order extends Model
         'status',
         'total_amount',
         'note',
+        'created_at',
+        'updated_at',
     ];
 
     const STATUS_NEW = 'new';

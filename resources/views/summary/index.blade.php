@@ -77,6 +77,38 @@
     </div>
 </div>
 
+<!-- Bulk Action Button -->
+@if($totalOrders > 0)
+@php
+    $statusFlow = [
+        'new' => 'preparing',
+        'preparing' => 'ordered',
+        'ordered' => 'shipping',
+        'shipping' => 'delivered',
+    ];
+    $nextStatus = $statusFlow[$status] ?? null;
+@endphp
+
+@if($nextStatus)
+<div class="bg-white rounded-lg shadow mb-6 p-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <p class="text-sm text-gray-600">
+                <i class="fas fa-info-circle mr-1 text-indigo-600"></i>
+                Có <strong>{{ $totalOrders }}</strong> đơn hàng đang ở trạng thái 
+                <span class="px-2 py-1 text-xs font-medium rounded-full bg-gray-100">{{ $statuses[$status] }}</span>
+            </p>
+        </div>
+        <button onclick="moveAllToNextStatus()" 
+                class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition">
+            <i class="fas fa-arrow-right mr-2"></i>
+            Chuyển tất cả sang "{{ $statuses[$nextStatus] }}"
+        </button>
+    </div>
+</div>
+@endif
+@endif
+
 <!-- Summary Table -->
 <div class="bg-white rounded-lg shadow overflow-hidden">
     <div class="p-4 border-b bg-yellow-50">
@@ -181,6 +213,46 @@ function copyToClipboard() {
     const text = document.getElementById('copy-text').innerText;
     navigator.clipboard.writeText(text).then(() => {
         alert('Đã copy danh sách!');
+    });
+}
+
+function moveAllToNextStatus() {
+    const currentStatus = '{{ $status }}';
+    const nextStatus = '{{ $nextStatus ?? '' }}';
+    const totalOrders = {{ $totalOrders }};
+    const nextStatusLabel = '{{ isset($nextStatus) ? $statuses[$nextStatus] : '' }}';
+    
+    if (!nextStatus) {
+        alert('Không thể chuyển trạng thái tiếp theo');
+        return;
+    }
+    
+    if (!confirm(`Bạn có chắc muốn chuyển ${totalOrders} đơn hàng sang trạng thái "${nextStatusLabel}"?`)) {
+        return;
+    }
+    
+    fetch('{{ route("summary.moveToNextStatus") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+            current_status: currentStatus,
+            date: '{{ $date }}'
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Có lỗi xảy ra: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(err => {
+        alert('Có lỗi xảy ra: ' + err.message);
     });
 }
 </script>

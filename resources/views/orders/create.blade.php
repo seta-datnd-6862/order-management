@@ -45,6 +45,14 @@
                         </a>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Ngày đặt hàng</label>
+                        <input type="date" name="created_at" 
+                               value="{{ old('created_at') }}"
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                               placeholder="Ngày đặt hàng...">
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú đơn hàng</label>
                         <textarea name="note" rows="2"
@@ -139,6 +147,7 @@
                                     </div>
 
                                     <!-- Image -->
+
                                     <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh sản phẩm</label>
                                         <div class="flex items-center space-x-4">
@@ -150,6 +159,11 @@
                                                     <i class="fas fa-image text-xl text-gray-400"></i>
                                                 </template>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="md:col-span-2">
+                                        <div class="flex items-center space-x-4">
                                             <input type="file" 
                                                    :name="`items[${index}][image]`" 
                                                    accept="image/*"

@@ -64,8 +64,9 @@ return [
     | is set to "UTC" by default as it is suitable for most use cases.
     |
     */
+    // set time zone to Hanoi time
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Ho_Chi_Minh',
 
     /*
     |--------------------------------------------------------------------------

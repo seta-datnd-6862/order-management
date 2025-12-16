@@ -9,6 +9,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class OrderController extends Controller
 {
@@ -65,12 +66,21 @@ class OrderController extends Controller
             'items.*.note' => 'nullable|string',
         ]);
 
+        $createdAt = $request->input('created_at', null);
+
+        if (!$createdAt) {
+            $createdAt = now()->startOfDay();
+        } else {
+            $createdAt = Carbon::parse($createdAt)->startOfDay();
+        }
+
         DB::beginTransaction();
         try {
             $order = Order::create([
                 'customer_id' => $validated['customer_id'],
                 'status' => Order::STATUS_NEW,
                 'note' => $validated['note'] ?? null,
+                'created_at' => $createdAt,
             ]);
 
             foreach ($validated['items'] as $index => $itemData) {

@@ -24,3 +24,5 @@ Route::post('orders/bulk-status', [OrderController::class, 'bulkUpdateStatus'])-
 
 // Tổng hợp
 Route::get('summary', [SummaryController::class, 'index'])->name('summary.index');
+
+Route::post('summary/move-to-next-status', [SummaryController::class, 'moveToNextStatus'])->name('summary.moveToNextStatus');

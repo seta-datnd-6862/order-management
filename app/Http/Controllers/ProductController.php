@@ -30,14 +30,29 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'image_base64' => 'nullable|string',
             'default_price' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
         ]);
 
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
+        // Xử lý ảnh base64
+        if ($request->filled('image_base64')) {
+            $imageData = $request->image_base64;
+            
+            // Lấy phần data sau "data:image/xxx;base64,"
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $matches)) {
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
+                
+                $imageData = base64_decode($imageData);
+                $fileName = 'products/' . uniqid() . '.' . $extension;
+                
+                Storage::disk('public')->put($fileName, $imageData);
+                $validated['image'] = $fileName;
+            }
         }
+        
+        unset($validated['image_base64']);
 
         Product::create($validated);
 
@@ -54,17 +69,33 @@ class ProductController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'image_base64' => 'nullable|string',
             'default_price' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
         ]);
 
-        if ($request->hasFile('image')) {
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
+        // Xử lý ảnh base64
+        if ($request->filled('image_base64')) {
+            $imageData = $request->image_base64;
+            
+            if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $matches)) {
+                // Xóa ảnh cũ
+                if ($product->image) {
+                    Storage::disk('public')->delete($product->image);
+                }
+                
+                $imageData = substr($imageData, strpos($imageData, ',') + 1);
+                $extension = $matches[1] === 'jpeg' ? 'jpg' : $matches[1];
+                
+                $imageData = base64_decode($imageData);
+                $fileName = 'products/' . uniqid() . '.' . $extension;
+                
+                Storage::disk('public')->put($fileName, $imageData);
+                $validated['image'] = $fileName;
             }
-            $validated['image'] = $request->file('image')->store('products', 'public');
         }
+        
+        unset($validated['image_base64']);
 
         $product->update($validated);
 
