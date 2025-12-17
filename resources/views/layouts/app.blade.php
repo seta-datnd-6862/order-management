@@ -8,6 +8,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="{{ asset('components/chosen.css') }}"
+        rel="stylesheet">
     <style>
         [x-cloak] { display: none !important; }
         
@@ -186,6 +188,9 @@
         @yield('content')
     </main>
 
+    <script src="{{ asset('js/lib/jquery.min.js') }}"></script>
+    <script src="{{ asset('components/chosen.js') }}"></script>
+
     <!-- Image Viewer Script -->
     <script>
         function imageViewer() {
@@ -352,6 +357,15 @@
                 console.error('Không thể copy:', err);
             });
         }
+
+        $(document).ready(function() {
+            $('.chosen-select').chosen({
+                width: '100%',
+                no_results_text: 'Không tìm thấy kết quả',
+                placeholder_text_single: '-- Chọn --',
+                allow_single_deselect: true
+            });
+        });
     </script>
 
     @stack('scripts')

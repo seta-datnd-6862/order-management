@@ -17,7 +17,7 @@ class InventoryImportItem extends Model
     public static function getSizes()
     {
         return [
-            'S', 'M', 'L', 'XL', 'XXL', 'XXXL',
+            'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '66',
             '73', '80', '90', '100', '110', '120', '130', '140', '150', '160', '170', '180',
         ];
     }

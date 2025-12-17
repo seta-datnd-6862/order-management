@@ -3,7 +3,7 @@
 @section('title', 'Sửa đơn hàng #' . $order->id)
 
 @section('content')
-<div x-data="orderForm()">
+<div id="orderForm">
     <div class="flex items-center mb-6">
         <a href="{{ route('orders.index') }}" class="mr-4 text-gray-600 hover:text-gray-900">
             <i class="fas fa-arrow-left text-xl"></i>
@@ -11,7 +11,7 @@
         <h1 class="text-2xl font-bold text-gray-800">Sửa đơn hàng #{{ $order->id }}</h1>
     </div>
 
-    <form action="{{ route('orders.update', $order) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('orders.update', $order) }}" method="POST" enctype="multipart/form-data" id="orderFormElement">
         @csrf
         @method('PUT')
         
@@ -29,8 +29,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Khách hàng <span class="text-red-500">*</span>
                             </label>
-                            <select name="customer_id" required
-                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <select name="customer_id" required class="chosen-select">
                                 <option value="">-- Chọn khách hàng --</option>
                                 @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}" {{ old('customer_id', $order->customer_id) == $customer->id ? 'selected' : '' }}>
@@ -44,8 +43,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Trạng thái <span class="text-red-500">*</span>
                             </label>
-                            <select name="status" required
-                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                            <select name="status" required class="chosen-select">
                                 @foreach($statuses as $key => $label)
                                 <option value="{{ $key }}" {{ old('status', $order->status) == $key ? 'selected' : '' }}>
                                     {{ $label }}
@@ -122,125 +120,14 @@
                         <h2 class="text-lg font-semibold">
                             <i class="fas fa-box mr-2 text-indigo-600"></i>Sản phẩm
                         </h2>
-                        <button type="button" @click="addItem()" 
+                        <button type="button" id="addItemBtn" 
                                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
                             <i class="fas fa-plus mr-1"></i>Thêm sản phẩm
                         </button>
                     </div>
 
-                    <div class="space-y-4">
-                        <template x-for="(item, index) in items" :key="index">
-                            <div class="border rounded-lg p-4 relative">
-                                <input type="hidden" :name="`items[${index}][id]`" :value="item.id">
-                                
-                                <button type="button" @click="removeItem(index)" 
-                                        x-show="items.length > 1"
-                                        class="absolute top-2 right-2 text-red-500 hover:text-red-700">
-                                    <i class="fas fa-times"></i>
-                                </button>
-
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <!-- Product -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Sản phẩm <span class="text-red-500">*</span>
-                                        </label>
-                                        <select :name="`items[${index}][product_id]`" 
-                                                x-model="item.product_id"
-                                                @change="onProductChange(index)"
-                                                required
-                                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                            <option value="">-- Chọn sản phẩm --</option>
-                                            @foreach($products as $product)
-                                            <option value="{{ $product->id }}" 
-                                                    data-price="{{ $product->default_price }}"
-                                                    data-image="{{ $product->image_url }}">
-                                                {{ $product->name }}
-                                            </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <!-- Size -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Size <span class="text-red-500">*</span>
-                                        </label>
-                                        <select :name="`items[${index}][size]`" 
-                                                x-model="item.size"
-                                                required
-                                                class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                            <option value="">-- Chọn size --</option>
-                                            @foreach($sizes as $size)
-                                            <option value="{{ $size }}">{{ $size }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <!-- Quantity -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Số lượng <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="number" 
-                                               :name="`items[${index}][quantity]`" 
-                                               x-model.number="item.quantity"
-                                               min="1" 
-                                               required
-                                               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                    </div>
-
-                                    <!-- Price -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                                            Giá <span class="text-red-500">*</span>
-                                        </label>
-                                        <input type="number" 
-                                               :name="`items[${index}][price]`" 
-                                               x-model.number="item.price"
-                                               min="0" 
-                                               required
-                                               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                    </div>
-
-                                    <!-- Image -->
-                                    <div class="md:col-span-2">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh sản phẩm</label>
-                                        <div class="flex items-center space-x-4">
-                                            <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
-                                                <template x-if="item.preview || item.currentImage || item.productImage">
-                                                    <img :src="item.preview || item.currentImage || item.productImage" class="w-full h-full object-cover">
-                                                </template>
-                                                <template x-if="!item.preview && !item.currentImage && !item.productImage">
-                                                    <i class="fas fa-image text-xl text-gray-400"></i>
-                                                </template>
-                                            </div>
-                                            <input type="file" 
-                                                   :name="`items[${index}][image]`" 
-                                                   accept="image/*"
-                                                   @change="onImageChange(index, $event)"
-                                                   class="flex-1 px-3 py-2 border rounded-lg text-sm">
-                                        </div>
-                                    </div>
-
-                                    <!-- Note -->
-                                    <div class="md:col-span-2">
-                                        <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
-                                        <input type="text" 
-                                               :name="`items[${index}][note]`" 
-                                               x-model="item.note"
-                                               placeholder="Ghi chú cho sản phẩm này..."
-                                               class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                                    </div>
-                                </div>
-
-                                <!-- Item Subtotal -->
-                                <div class="mt-3 pt-3 border-t flex justify-between items-center">
-                                    <span class="text-sm text-gray-500">Thành tiền:</span>
-                                    <span class="font-semibold text-indigo-600" x-text="formatCurrency(item.price * item.quantity)"></span>
-                                </div>
-                            </div>
-                        </template>
+                    <div id="itemsContainer" class="space-y-4">
+                        <!-- Items will be added here by jQuery -->
                     </div>
                 </div>
             </div>
@@ -255,15 +142,15 @@
                     <div class="space-y-3 text-sm">
                         <div class="flex justify-between">
                             <span class="text-gray-500">Số sản phẩm:</span>
-                            <span class="font-medium" x-text="totalItems()"></span>
+                            <span class="font-medium" id="totalItems">0</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-gray-500">Tổng số lượng:</span>
-                            <span class="font-medium" x-text="totalQuantity()"></span>
+                            <span class="font-medium" id="totalQuantity">0</span>
                         </div>
                         <div class="border-t pt-3 flex justify-between text-lg">
                             <span class="font-semibold">Tổng tiền:</span>
-                            <span class="font-bold text-indigo-600" x-text="formatCurrency(totalAmount())"></span>
+                            <span class="font-bold text-indigo-600" id="totalAmount">0đ</span>
                         </div>
                     </div>
 
@@ -283,74 +170,327 @@
     </form>
 </div>
 
-<?php  
-    $orderItems = $order->items->map(function($item) {
-        return [
-            'id' => $item->id,
-            'product_id' => (string)$item->product_id,
-            'size' => $item->size,
-            'quantity' => $item->quantity,
-            'price' => $item->price,
-            'note' => $item->note ?? '',
-            'preview' => null,
-            'currentImage' => $item->image_url,
-            'productImage' => $item->product->image_url,
-        ];
-    });
-?>
 @push('scripts')
-<script>
-// Convert PHP data to JSON
-const orderItemsData = @json($orderItems);
+<?php 
+$productsData = $products->map(function($p) {
+    return [
+        'id' => $p->id,
+        'name' => $p->name,
+        'price' => $p->default_price,
+        'image' => $p->image_url
+    ];
+});
 
-function orderForm() {
-    return {
-        items: orderItemsData,
-        
-        addItem() {
-            this.items.push({ id: null, product_id: '', size: '', quantity: 1, price: 0, note: '', preview: null, currentImage: null, productImage: null });
-        },
-        
-        removeItem(index) {
-            if (this.items.length > 1) {
-                this.items.splice(index, 1);
-            }
-        },
-        
-        onProductChange(index) {
-            const select = document.querySelector(`select[name="items[${index}][product_id]"]`);
-            const option = select.options[select.selectedIndex];
-            if (option && !this.items[index].id) {
-                this.items[index].price = parseInt(option.dataset.price) || 0;
-            }
-            if (option) {
-                this.items[index].productImage = option.dataset.image || null;
-            }
-        },
-        
-        onImageChange(index, event) {
-            const file = event.target.files[0];
-            if (file) {
-                this.items[index].preview = URL.createObjectURL(file);
-            }
-        },
-        
-        totalItems() {
-            return this.items.filter(i => i.product_id).length;
-        },
-        
-        totalQuantity() {
-            return this.items.reduce((sum, i) => sum + (parseInt(i.quantity) || 0), 0);
-        },
-        
-        totalAmount() {
-            return this.items.reduce((sum, i) => sum + ((parseInt(i.price) || 0) * (parseInt(i.quantity) || 0)), 0);
-        },
-        
-        formatCurrency(value) {
-            return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
-        }
+$orderItemsData = $order->items->map(function($item) {
+    return [
+        'id' => $item->id,
+        'product_id' => (string)$item->product_id,
+        'size' => $item->size,
+        'quantity' => $item->quantity,
+        'price' => $item->price,
+        'note' => $item->note ?? '',
+        'currentImage' => $item->image_url,
+        'productImage' => $item->product->image_url ?? null,
+    ];
+});
+?>
+<script>
+// Products data từ server
+const productsData = @json($productsData);
+const sizesData = @json($sizes);
+const existingItems = @json($orderItemsData);
+
+let itemIndex = 0;
+const itemIndexMap = {}; // Map để track index của existing items
+
+$(document).ready(function() {
+    // Load existing items
+    loadExistingItems();
+    
+    // Add item button
+    $('#addItemBtn').on('click', function() {
+        addItem();
+    });
+    
+    // Initial calculation
+    calculateTotals();
+});
+
+function loadExistingItems() {
+    existingItems.forEach(function(itemData) {
+        addItem(itemData);
+    });
+}
+
+function addItem(existingData = null) {
+    const index = itemIndex++;
+    
+    // If existing item, store its ID
+    if (existingData && existingData.id) {
+        itemIndexMap[index] = existingData.id;
     }
+    
+    const itemHtml = `
+        <div class="border rounded-lg p-4 relative item-row" data-index="${index}">
+            ${existingData && existingData.id ? `<input type="hidden" name="items[${index}][id]" value="${existingData.id}">` : ''}
+            
+            <button type="button" class="remove-item-btn absolute top-2 right-2 text-red-500 hover:text-red-700" style="display: none;">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Product -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Sản phẩm <span class="text-red-500">*</span>
+                    </label>
+                    <select name="items[${index}][product_id]" 
+                            class="product-select chosen-select" 
+                            data-index="${index}"
+                            required>
+                        <option value="">-- Chọn sản phẩm --</option>
+                        ${productsData.map(p => `<option value="${p.id}" data-price="${p.price}" data-image="${p.image}" ${existingData && existingData.product_id == p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                    </select>
+                </div>
+
+                <!-- Size -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Size <span class="text-red-500">*</span>
+                    </label>
+                    <select name="items[${index}][size]" 
+                            class="size-select w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                            required>
+                        <option value="">-- Chọn size --</option>
+                        ${sizesData.map(s => `<option value="${s}" ${existingData && existingData.size == s ? 'selected' : ''}>${s}</option>`).join('')}
+                    </select>
+                </div>
+
+                <!-- Quantity -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Số lượng <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" 
+                           name="items[${index}][quantity]" 
+                           class="quantity-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                           data-index="${index}"
+                           value="${existingData ? existingData.quantity : 1}"
+                           min="1" 
+                           required>
+                </div>
+
+                <!-- Price -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Giá <span class="text-red-500">*</span>
+                    </label>
+                    <input type="number" 
+                           name="items[${index}][price]" 
+                           class="price-input w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                           data-index="${index}"
+                           value="${existingData ? existingData.price : 0}"
+                           min="0" 
+                           required>
+                </div>
+
+                <!-- Image Preview -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ảnh sản phẩm</label>
+                    <div class="flex items-center space-x-4">
+                        <div class="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center image-preview" data-index="${index}">
+                            ${existingData && (existingData.currentImage || existingData.productImage) 
+                                ? `<img src="${existingData.currentImage || existingData.productImage}" class="w-full h-full object-cover">`
+                                : '<i class="fas fa-image text-xl text-gray-400"></i>'
+                            }
+                        </div>
+                        <input type="file" 
+                               name="items[${index}][image]" 
+                               class="image-input flex-1 px-3 py-2 border rounded-lg text-sm"
+                               data-index="${index}"
+                               accept="image/*">
+                    </div>
+                </div>
+
+                <!-- Note -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+                    <input type="text" 
+                           name="items[${index}][note]" 
+                           value="${existingData ? (existingData.note || '') : ''}"
+                           placeholder="Ghi chú cho sản phẩm này..."
+                           class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+
+            <!-- Item Subtotal -->
+            <div class="mt-3 pt-3 border-t flex justify-between items-center">
+                <span class="text-sm text-gray-500">Thành tiền:</span>
+                <span class="font-semibold text-indigo-600 item-subtotal" data-index="${index}">0đ</span>
+            </div>
+        </div>
+    `;
+    
+    $('#itemsContainer').append(itemHtml);
+    
+    // Initialize Chosen for new select
+    initChosenForItem(index);
+    
+    // Bind events
+    bindItemEvents(index);
+    
+    // Update remove button visibility
+    updateRemoveButtons();
+    
+    // Calculate totals
+    calculateTotals();
+}
+
+function initChosenForItem(index) {
+    const $select = $(`.product-select[data-index="${index}"]`);
+    
+    if ($select.length) {
+        $select.chosen({
+            placeholder_text_single: 'Chọn sản phẩm',
+            no_results_text: 'Không tìm thấy',
+            width: '100%',
+            search_contains: true
+        });
+        
+        // Bind change event for Chosen
+        $select.on('change', function() {
+            onProductChange(index);
+        });
+    }
+}
+
+function bindItemEvents(index) {
+    // Remove button
+    $(`.item-row[data-index="${index}"] .remove-item-btn`).on('click', function() {
+        removeItem(index);
+    });
+    
+    // Quantity change
+    $(`.quantity-input[data-index="${index}"]`).on('input change', function() {
+        calculateItemSubtotal(index);
+        calculateTotals();
+    });
+    
+    // Price change
+    $(`.price-input[data-index="${index}"]`).on('input change', function() {
+        calculateItemSubtotal(index);
+        calculateTotals();
+    });
+    
+    // Image change
+    $(`.image-input[data-index="${index}"]`).on('change', function(e) {
+        onImageChange(index, e);
+    });
+}
+
+function onProductChange(index) {
+    const $select = $(`.product-select[data-index="${index}"]`);
+    const $option = $select.find('option:selected');
+    
+    if ($option.val()) {
+        const price = $option.data('price') || 0;
+        const image = $option.data('image') || '';
+        
+        // Chỉ update price nếu là item mới (không có ID)
+        const hasExistingId = itemIndexMap[index];
+        if (!hasExistingId) {
+            $(`.price-input[data-index="${index}"]`).val(price);
+        }
+        
+        // Update image preview nếu chưa có ảnh hiện tại
+        const $preview = $(`.image-preview[data-index="${index}"]`);
+        const hasCurrentImage = $preview.find('img').length > 0;
+        
+        if (image && !hasCurrentImage) {
+            $preview.html(`<img src="${image}" class="w-full h-full object-cover">`);
+        }
+        
+        // Calculate subtotal
+        calculateItemSubtotal(index);
+        calculateTotals();
+    }
+}
+
+function onImageChange(index, event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $(`.image-preview[data-index="${index}"]`).html(`<img src="${e.target.result}" class="w-full h-full object-cover">`);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeItem(index) {
+    // Destroy Chosen
+    const $select = $(`.product-select[data-index="${index}"]`);
+    if ($select.data('chosen')) {
+        $select.chosen('destroy');
+    }
+    
+    // Remove item
+    $(`.item-row[data-index="${index}"]`).remove();
+    
+    // Remove from index map
+    delete itemIndexMap[index];
+    
+    // Update buttons and totals
+    updateRemoveButtons();
+    calculateTotals();
+}
+
+function updateRemoveButtons() {
+    const itemCount = $('.item-row').length;
+    
+    if (itemCount > 1) {
+        $('.remove-item-btn').show();
+    } else {
+        $('.remove-item-btn').hide();
+    }
+}
+
+function calculateItemSubtotal(index) {
+    const quantity = parseInt($(`.quantity-input[data-index="${index}"]`).val()) || 0;
+    const price = parseInt($(`.price-input[data-index="${index}"]`).val()) || 0;
+    const subtotal = quantity * price;
+    
+    $(`.item-subtotal[data-index="${index}"]`).text(formatCurrency(subtotal));
+}
+
+function calculateTotals() {
+    let totalItems = 0;
+    let totalQuantity = 0;
+    let totalAmount = 0;
+    
+    $('.item-row').each(function() {
+        const index = $(this).data('index');
+        const productId = $(`.product-select[data-index="${index}"]`).val();
+        const quantity = parseInt($(`.quantity-input[data-index="${index}"]`).val()) || 0;
+        const price = parseInt($(`.price-input[data-index="${index}"]`).val()) || 0;
+        
+        if (productId) {
+            totalItems++;
+        }
+        totalQuantity += quantity;
+        totalAmount += quantity * price;
+        
+        // Update item subtotal
+        calculateItemSubtotal(index);
+    });
+    
+    $('#totalItems').text(totalItems);
+    $('#totalQuantity').text(totalQuantity);
+    $('#totalAmount').text(formatCurrency(totalAmount));
+}
+
+function formatCurrency(value) {
+    return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
 }
 </script>
 @endpush

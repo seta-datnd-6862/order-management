@@ -151,6 +151,7 @@ class OrderController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'deposit_amount' => 'nullable|numeric|min:0',
+            'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
             'note' => 'nullable|string',
             'shipping_code' => 'nullable|string|max:255',
             'shipping_image' => 'nullable|image|max:5120',
@@ -186,6 +187,7 @@ class OrderController extends Controller
             $order->update([
                 'customer_id' => $validated['customer_id'],
                 'total_amount' => $totalAmount,
+                'status' => $validated['status'],
                 'deposit_amount' => $validated['deposit_amount'] ?? 0,
                 'note' => $validated['note'] ?? null,
                 'shipping_code' => $validated['shipping_code'] ?? null,

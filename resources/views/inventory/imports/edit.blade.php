@@ -79,10 +79,6 @@
                     <div class="border-t pt-6">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold">Danh sách sản phẩm</h3>
-                            <button type="button" @click="addItem()" 
-                                    class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-                                <i class="fas fa-plus mr-1"></i>Thêm sản phẩm
-                            </button>
                         </div>
 
                         <div class="space-y-4">
@@ -160,6 +156,13 @@
                                     </div>
                                 </div>
                             </template>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4 mt-4">
+                            <button type="button" @click="addItem()" 
+                                    class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                                <i class="fas fa-plus mr-1"></i>Thêm sản phẩm
+                            </button>
                         </div>
 
                         @error('items')
