@@ -12,6 +12,7 @@ class Order extends Model
         'customer_id',
         'status',
         'total_amount',
+        'discount_amount',
         'deposit_amount',
         'note',
         'shipping_code',
@@ -22,6 +23,7 @@ class Order extends Model
 
     protected $casts = [
         'total_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'deposit_amount' => 'decimal:2',
     ];
 
@@ -87,7 +89,7 @@ class Order extends Model
 
     public function getRemainingAmountAttribute()
     {
-        return $this->total_amount - $this->deposit_amount;
+        return $this->total_amount - $this->deposit_amount - $this->discount_amount;
     }
 
     public function getDepositPercentageAttribute()

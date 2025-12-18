@@ -43,7 +43,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Trạng thái <span class="text-red-500">*</span>
                             </label>
-                            <select name="status" required class="chosen-select">
+                            <select name="status" required>
                                 @foreach($statuses as $key => $label)
                                 <option value="{{ $key }}" {{ old('status', $order->status) == $key ? 'selected' : '' }}>
                                     {{ $label }}
@@ -65,6 +65,20 @@
                                placeholder="0"
                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
                         <p class="mt-1 text-xs text-gray-500">Nhập số tiền khách hàng đã đặt cọc cho đơn hàng này</p>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Số tiền giảm giá
+                        </label>
+                        <input type="number" 
+                               name="discount_amount" 
+                               value="{{ old('discount_amount', $order->discount_amount) }}"
+                               min="0"
+                               step="1000"
+                               placeholder="0"
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <p class="mt-1 text-xs text-gray-500">Nhập số tiền giảm giá cho đơn hàng này</p>
                     </div>
 
                     <div>
@@ -120,14 +134,17 @@
                         <h2 class="text-lg font-semibold">
                             <i class="fas fa-box mr-2 text-indigo-600"></i>Sản phẩm
                         </h2>
-                        <button type="button" id="addItemBtn" 
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-                            <i class="fas fa-plus mr-1"></i>Thêm sản phẩm
-                        </button>
                     </div>
 
                     <div id="itemsContainer" class="space-y-4">
                         <!-- Items will be added here by jQuery -->
+                    </div>
+
+                    <div class="flex items-center justify-end mt-4">
+                        <button type="button" id="addItemBtn" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                            <i class="fas fa-plus mr-1"></i>Thêm sản phẩm
+                        </button>
                     </div>
                 </div>
             </div>
@@ -159,6 +176,10 @@
                                 class="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold">
                             <i class="fas fa-save mr-2"></i>Cập nhật đơn hàng
                         </button>
+                        <a href="{{ route('orders.show', $order) }}" 
+                           class="block w-full px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-center">
+                           Xem chi tiết đơn hàng
+                        </a>
                         <a href="{{ route('orders.index') }}" 
                            class="block w-full px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 text-center">
                             Hủy

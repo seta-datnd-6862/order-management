@@ -66,6 +66,19 @@
                         <p class="mt-1 text-xs text-gray-500">Nhập số tiền khách hàng đã đặt cọc cho đơn hàng này</p>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Số tiền giảm giá
+                        </label>
+                        <input type="number" 
+                               name="discount_amount" 
+                               value="{{ old('discount_amount') }}"
+                               min="0"
+                               step="1000"
+                               placeholder="0"
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+                        <p class="mt-1 text-xs text-gray-500">Nhập số tiền giảm giá cho đơn hàng này</p>
+                    </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú đơn hàng</label>
@@ -81,14 +94,17 @@
                         <h2 class="text-lg font-semibold">
                             <i class="fas fa-box mr-2 text-indigo-600"></i>Sản phẩm
                         </h2>
-                        <button type="button" id="addItemBtn" 
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-                            <i class="fas fa-plus mr-1"></i>Thêm sản phẩm
-                        </button>
                     </div>
 
                     <div id="itemsContainer" class="space-y-4">
                         <!-- Items will be added here by jQuery -->
+                    </div>
+
+                    <div class="flex items-center justify-end mt-4">
+                        <button type="button" id="addItemBtn" 
+                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                            <i class="fas fa-plus mr-1"></i>Thêm sản phẩm
+                        </button>
                     </div>
 
                     @error('items')

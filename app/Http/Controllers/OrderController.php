@@ -57,6 +57,7 @@ class OrderController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'deposit_amount' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
             'note' => 'nullable|string',
             'shipping_code' => 'nullable|string|max:255',
             'shipping_image' => 'nullable|image|max:5120', // 5MB
@@ -89,9 +90,11 @@ class OrderController extends Controller
                 'status' => Order::STATUS_NEW,
                 'total_amount' => $totalAmount,
                 'deposit_amount' => $validated['deposit_amount'] ?? 0,
+                'discount_amount' => $validated['discount_amount'] ?? 0,
                 'note' => $validated['note'] ?? null,
                 'shipping_code' => $validated['shipping_code'] ?? null,
                 'shipping_image' => $shippingImagePath,
+                'created_at' => Carbon::parse($request->input('created_at', now())),
             ]);
 
             // Tạo các item
@@ -151,6 +154,7 @@ class OrderController extends Controller
         $validated = $request->validate([
             'customer_id' => 'required|exists:customers,id',
             'deposit_amount' => 'nullable|numeric|min:0',
+            'discount_amount' => 'nullable|numeric|min:0',
             'status' => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
             'note' => 'nullable|string',
             'shipping_code' => 'nullable|string|max:255',
@@ -189,6 +193,7 @@ class OrderController extends Controller
                 'total_amount' => $totalAmount,
                 'status' => $validated['status'],
                 'deposit_amount' => $validated['deposit_amount'] ?? 0,
+                'discount_amount' => $validated['discount_amount'] ?? 0,
                 'note' => $validated['note'] ?? null,
                 'shipping_code' => $validated['shipping_code'] ?? null,
                 'shipping_image' => $shippingImagePath,
