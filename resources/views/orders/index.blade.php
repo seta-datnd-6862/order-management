@@ -83,11 +83,28 @@
                                x-model="selectedOrders"
                                class="mt-1 h-4 w-4 text-indigo-600 rounded">
                         <div>
-                            <div class="flex items-center space-x-2">
+                            <div class="flex items-center space-x-2 flex-wrap">
                                 <span class="font-bold text-lg">#{{ $order->id }}</span>
                                 <span class="px-2 py-1 text-xs font-medium rounded-full {{ $order->status_color }}">
                                     {{ $order->status_label }}
                                 </span>
+                                
+                                {{-- Inventory Status Label for ORDERED status --}}
+                                @if(request('status') === 'ordered' && isset($order->inventory_status))
+                                    @if($order->inventory_status === 'full')
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 border border-green-300">
+                                        <i class="fas fa-check-circle mr-1"></i>Hàng đủ
+                                    </span>
+                                    @elseif($order->inventory_status === 'partial')
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 border border-orange-300">
+                                        <i class="fas fa-exclamation-circle mr-1"></i>Hàng thiếu
+                                    </span>
+                                    @else
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 border border-red-300">
+                                        <i class="fas fa-times-circle mr-1"></i>Chưa có hàng
+                                    </span>
+                                    @endif
+                                @endif
                             </div>
                             <p class="text-gray-600 mt-1">
                                 <i class="fas fa-user mr-1"></i>{{ $order->customer->name }}

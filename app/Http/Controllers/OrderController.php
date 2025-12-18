@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\InventoryImportItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -16,31 +17,81 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $query = Order::with(['customer', 'items.product']);
-        
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-        
-        if ($request->filled('date')) {
-            $query->whereDate('created_at', $request->date);
-        }
-        
-        if ($request->filled('customer_id')) {
-            $query->where('customer_id', $request->customer_id);
-        }
-        
+
+        // Filter by search (customer name)
         if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('customer', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            $query->whereHas('customer', function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->search . '%');
             });
         }
 
-        $orders = $query->orderBy('created_at', 'desc')->paginate(20);
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Filter by date
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        // Filter by customer
+        if ($request->filled('customer_id')) {
+            $query->where('customer_id', $request->customer_id);
+        }
+
+        $orders = $query->latest()->paginate(20);
+
+        // Check inventory availability for ORDERED status
+        if ($request->filled('status') && $request->status === Order::STATUS_ORDERED) {
+            foreach ($orders as $order) {
+                $order->inventory_status = $this->checkInventoryAvailability($order);
+            }
+        }
+
         $statuses = Order::getStatuses();
         $customers = Customer::orderBy('name')->get();
-        
+
         return view('orders.index', compact('orders', 'statuses', 'customers'));
+    }
+
+    /**
+     * Check if order items are available in inventory
+     */
+    private function checkInventoryAvailability(Order $order)
+    {
+        $allAvailable = true;
+        $partiallyAvailable = false;
+
+        foreach ($order->items as $item) {
+            // Calculate available stock for this product and size
+            $imported = InventoryImportItem::where('product_id', $item->product_id)
+                ->where('size', $item->size)
+                ->sum('quantity');
+
+            $sold = OrderItem::where('product_id', $item->product_id)
+                ->where('size', $item->size)
+                ->whereHas('order', function ($q) {
+                    $q->whereIn('status', [Order::STATUS_SHIPPING, Order::STATUS_DELIVERED]);
+                })
+                ->sum('quantity');
+
+            $available = $imported - $sold;
+
+            if ($available < $item->quantity) {
+                $allAvailable = false;
+            } else {
+                $partiallyAvailable = true;
+            }
+        }
+
+        if ($allAvailable && $order->items->count() > 0) {
+            return 'full'; // Hàng đủ
+        } elseif ($partiallyAvailable) {
+            return 'partial'; // Hàng thiếu một phần
+        } else {
+            return 'none'; // Chưa có hàng
+        }
     }
 
     public function create()
