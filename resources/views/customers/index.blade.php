@@ -94,7 +94,7 @@
     
     @if($customers->hasPages())
     <div class="px-6 py-4 border-t">
-        {{ $customers->links() }}
+        {{ $customers->appends(request()->query())->links() }}
     </div>
     @endif
 </div>

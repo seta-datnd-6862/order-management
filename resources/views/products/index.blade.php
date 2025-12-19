@@ -21,6 +21,12 @@
                    placeholder="Tìm theo tên sản phẩm..."
                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
         </div>
+        {{-- Search by product code --}}
+        <div class="flex-1">
+            <input type="text" name="product_code" value="{{ request('product_code') }}" 
+                   placeholder="Tìm theo mã sản phẩm..."
+                   class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+        </div>
         <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
             <i class="fas fa-search"></i>
         </button>
@@ -79,7 +85,7 @@
 
 @if($products->hasPages())
 <div class="mt-6">
-    {{ $products->links() }}
+    {{ $products->appends(request()->query())->links() }}
 </div>
 @endif
 @endsection

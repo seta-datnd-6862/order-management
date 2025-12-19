@@ -138,7 +138,7 @@
 
 @if($imports->hasPages())
 <div class="mt-6">
-    {{ $imports->links() }}
+    {{ $imports->appends(request()->query())->links() }}
 </div>
 @endif
 

@@ -52,6 +52,33 @@
 
 <!-- Bulk Actions -->
 <div x-data="bulkActions()" x-cloak>
+    {{-- Sorting Info for ORDERED status --}}
+    @if(request('status') === 'ordered' && $orders->count() > 0)
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+            <div>
+                <p class="text-sm text-blue-800 font-medium">
+                    Đơn hàng được sắp xếp theo độ ưu tiên:
+                </p>
+                <p class="text-xs text-blue-700 mt-1">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs mr-2">
+                        <i class="fas fa-check-circle mr-1"></i>Hàng đủ
+                    </span>
+                    →
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-xs mx-2">
+                        <i class="fas fa-exclamation-circle mr-1"></i>Hàng thiếu
+                    </span>
+                    →
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-xs ml-2">
+                        <i class="fas fa-times-circle mr-1"></i>Chưa có hàng
+                    </span>
+                </p>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <div x-show="selectedOrders.length > 0" class="bg-white rounded-lg shadow mb-4 p-4">
         <div class="flex flex-wrap items-center gap-4">
             <span class="text-sm text-gray-600">
@@ -203,7 +230,7 @@
 
 @if($orders->hasPages())
 <div class="mt-6">
-    {{ $orders->links() }}
+    {{ $orders->appends(request()->query())->links() }}
 </div>
 @endif
 

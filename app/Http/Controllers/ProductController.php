@@ -16,6 +16,11 @@ class ProductController extends Controller
             $query->where('name', 'like', "%{$request->search}%");
         }
 
+        if ($request->filled('product_code')) {
+            $productID = ltrim($request->product_code, 'KBC0');
+            $query->where('id', $productID);
+        }
+
         $products = $query->orderBy('created_at', 'desc')->paginate(20);
         
         return view('products.index', compact('products'));

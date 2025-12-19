@@ -47,6 +47,18 @@ class OrderController extends Controller
             foreach ($orders as $order) {
                 $order->inventory_status = $this->checkInventoryAvailability($order);
             }
+            
+            // Sort orders: full stock first, then partial, then none
+            $sortedOrders = $orders->getCollection()->sortBy(function($order) {
+                $priority = [
+                    'full' => 1,
+                    'partial' => 2,
+                    'none' => 3,
+                ];
+                return $priority[$order->inventory_status] ?? 4;
+            })->values();
+            
+            $orders->setCollection($sortedOrders);
         }
 
         $statuses = Order::getStatuses();
@@ -182,11 +194,45 @@ class OrderController extends Controller
     public function show(Order $order)
     {
         $order->load(['customer', 'items.product']);
+        
+        // Check inventory availability for each item
+        foreach ($order->items as $item) {
+            $item->inventory_check = $this->checkItemInventoryAvailability($item);
+        }
+        
+        // Overall order inventory status
+        $order->inventory_status = $this->checkInventoryAvailability($order);
+        
+        return view('orders.show', compact('order'));
+    }
 
-        return view('orders.show', [
-            'order' => $order,
-            'statuses' => Order::getStatuses(),
-        ]);
+    /**
+     * Check inventory availability for a single order item
+     */
+    private function checkItemInventoryAvailability(OrderItem $item)
+    {
+        // Calculate available stock for this product and size
+        $imported = InventoryImportItem::where('product_id', $item->product_id)
+            ->where('size', $item->size)
+            ->sum('quantity');
+
+        $sold = OrderItem::where('product_id', $item->product_id)
+            ->where('size', $item->size)
+            ->whereHas('order', function ($q) use ($item) {
+                $q->whereIn('status', [Order::STATUS_SHIPPING, Order::STATUS_DELIVERED])
+                  ->where('id', '!=', $item->order_id); // Exclude current order
+            })
+            ->sum('quantity');
+
+        $available = $imported - $sold;
+        $needed = $item->quantity;
+
+        return [
+            'available' => $available,
+            'needed' => $needed,
+            'shortage' => max(0, $needed - $available),
+            'status' => $available >= $needed ? 'sufficient' : 'insufficient',
+        ];
     }
 
     public function edit(Order $order)
