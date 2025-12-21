@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Tạo đơn nhập kho')
+@section('title', 'Tạo đơn xuất kho')
 
 @section('content')
 <div class="mb-6">
-    <a href="{{ route('inventory.imports.index') }}" class="text-gray-600 hover:text-gray-900">
+    <a href="{{ route('inventory.exports.index') }}" class="text-gray-600 hover:text-gray-900">
         <i class="fas fa-arrow-left mr-2"></i>Quay lại danh sách
     </a>
 </div>
@@ -14,53 +14,53 @@
     <div class="lg:col-span-2">
         <div class="bg-white rounded-lg shadow p-6">
             <h2 class="text-xl font-bold mb-6">
-                <i class="fas fa-box-open mr-2 text-indigo-600"></i>Thông tin đơn nhập
+                <i class="fas fa-arrow-circle-down mr-2 text-red-600"></i>Thông tin đơn xuất
             </h2>
 
-            <form action="{{ route('inventory.imports.store') }}" method="POST" id="importForm">
+            <form action="{{ route('inventory.exports.store') }}" method="POST" id="exportForm">
                 @csrf
 
                 <div class="space-y-4">
-                    <!-- Import Code -->
+                    <!-- Export Code -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Mã đơn nhập <span class="text-red-500">*</span>
+                            Mã đơn xuất <span class="text-red-500">*</span>
                         </label>
-                        <input type="text" name="import_code" value="{{ old('import_code') }}" 
-                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 @error('import_code') border-red-500 @enderror"
+                        <input type="text" name="export_code" value="{{ old('export_code', $exportCode) }}" 
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 @error('export_code') border-red-500 @enderror"
                                required>
-                        @error('import_code')
+                        @error('export_code')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- Supplier -->
+                    <!-- Reason -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Nhà cung cấp <span class="text-red-500">*</span>
+                            Lý do xuất kho <span class="text-red-500">*</span>
                         </label>
-                        <select name="supplier" 
-                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 @error('supplier') border-red-500 @enderror"
+                        <select name="reason" 
+                                class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 @error('reason') border-red-500 @enderror"
                                 required>
-                            <option value="">-- Chọn nhà cung cấp --</option>
-                            @foreach($suppliers as $key => $label)
-                            <option value="{{ $key }}" {{ old('supplier') == $key ? 'selected' : '' }}>{{ $label }}</option>
+                            <option value="">-- Chọn lý do --</option>
+                            @foreach($reasons as $key => $label)
+                            <option value="{{ $key }}" {{ old('reason') == $key ? 'selected' : '' }}>{{ $label }}</option>
                             @endforeach
                         </select>
-                        @error('supplier')
+                        @error('reason')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- Import Date -->
+                    <!-- Export Date -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">
-                            Ngày nhập hàng <span class="text-red-500">*</span>
+                            Ngày xuất kho <span class="text-red-500">*</span>
                         </label>
-                        <input type="date" name="import_date" value="{{ old('import_date', date('Y-m-d')) }}"
-                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 @error('import_date') border-red-500 @enderror"
+                        <input type="date" name="export_date" value="{{ old('export_date', date('Y-m-d')) }}"
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 @error('export_date') border-red-500 @enderror"
                                required>
-                        @error('import_date')
+                        @error('export_date')
                         <p class="mt-1 text-sm text-red-500">{{ $message }}</p>
                         @enderror
                     </div>
@@ -70,13 +70,13 @@
                         <label class="block text-sm font-medium text-gray-700 mb-2">Ghi chú</label>
                         <textarea name="note" rows="3"
                                   class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
-                                  placeholder="Thông tin bổ sung về đơn nhập...">{{ old('note') }}</textarea>
+                                  placeholder="Thông tin bổ sung về đơn xuất...">{{ old('note') }}</textarea>
                     </div>
 
                     <!-- Items Section -->
                     <div class="border-t pt-6">
                         <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold">Danh sách sản phẩm</h3>
+                            <h3 class="text-lg font-semibold">Danh sách sản phẩm xuất</h3>
                         </div>
 
                         <div id="itemsContainer" class="space-y-4">
@@ -85,7 +85,7 @@
 
                         <div class="flex items-center justify-end mt-4">
                             <button type="button" id="addItemBtn" 
-                                    class="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                                    class="px-3 py-1 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm">
                                 <i class="fas fa-plus mr-1"></i>Thêm sản phẩm
                             </button>
                         </div>
@@ -97,13 +97,13 @@
 
                     <!-- Submit Button -->
                     <div class="flex justify-end space-x-3 pt-6 border-t">
-                        <a href="{{ route('inventory.imports.index') }}" 
+                        <a href="{{ route('inventory.exports.index') }}" 
                            class="px-6 py-2 border rounded-lg hover:bg-gray-50">
                             Hủy
                         </a>
                         <button type="submit" 
-                                class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
-                            <i class="fas fa-save mr-2"></i>Lưu đơn nhập
+                                class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                            <i class="fas fa-save mr-2"></i>Lưu đơn xuất
                         </button>
                     </div>
                 </div>
@@ -122,15 +122,15 @@
                     <span class="font-bold" id="totalProducts">0</span>
                 </div>
                 <div class="flex justify-between py-2 border-b">
-                    <span class="text-gray-600">Tổng số lượng:</span>
-                    <span class="font-bold text-indigo-600" id="totalQuantity">0</span>
+                    <span class="text-gray-600">Tổng số lượng xuất:</span>
+                    <span class="font-bold text-red-600" id="totalQuantity">0</span>
                 </div>
             </div>
 
-            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                <p class="text-sm text-blue-800">
-                    <i class="fas fa-info-circle mr-1"></i>
-                    Nhập đầy đủ thông tin sản phẩm, size và số lượng cho mỗi mặt hàng.
+            <div class="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+                <p class="text-sm text-red-800">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>
+                    <strong>Lưu ý:</strong> Xuất kho sẽ trừ số lượng trong kho. Kiểm tra kỹ trước khi lưu.
                 </p>
             </div>
         </div>
@@ -178,7 +178,7 @@ function addItem() {
         sizeOptions += '<option value="' + sizes[i] + '">' + sizes[i] + '</option>';
     }
     
-    var itemHtml = '<div class="bg-gray-50 p-4 rounded-lg border item-row" data-index="' + itemIndex + '">' +
+    var itemHtml = '<div class="bg-red-50 p-4 rounded-lg border border-red-200 item-row" data-index="' + itemIndex + '">' +
         '<div class="flex items-start justify-between mb-3">' +
             '<div class="flex items-center space-x-2">' +
                 '<span class="text-sm font-medium text-gray-700">Sản phẩm <span class="item-number">' + (itemIndex + 1) + '</span></span>' +
@@ -204,22 +204,21 @@ function addItem() {
                 '</select>' +
             '</div>' +
             '<div>' +
-                '<label class="block text-sm text-gray-600 mb-1">Số lượng</label>' +
+                '<label class="block text-sm text-gray-600 mb-1">Số lượng xuất</label>' +
                 '<input type="number" name="items[' + itemIndex + '][quantity]" min="1" value="1" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" required>' +
             '</div>' +
             '<div>' +
                 '<label class="block text-sm text-gray-600 mb-1">Ghi chú</label>' +
-                '<input type="text" name="items[' + itemIndex + '][note]" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Ghi chú về sản phẩm...">' +
+                '<input type="text" name="items[' + itemIndex + '][note]" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Ghi chú...">' +
             '</div>' +
         '</div>' +
     '</div>';
     
     $('#itemsContainer').append(itemHtml);
-    
     itemIndex++;
     updateItemNumbers();
     updateTotals();
-    $('.chosen-select').chosen({ width: '100%' });
+    $('.chosen-select').chosen({ width: '100%' }); 
 }
 
 // Remove item

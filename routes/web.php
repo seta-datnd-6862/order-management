@@ -7,6 +7,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryImportController;
+use App\Http\Controllers\InventoryExportController;
 
 // Trang chủ - redirect đến orders
 Route::get('/', function () {
@@ -36,4 +37,7 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
     
     // Đơn nhập kho
     Route::resource('imports', InventoryImportController::class);
+
+    // Đơn xuất kho
+    Route::resource('exports', InventoryExportController::class);
 });

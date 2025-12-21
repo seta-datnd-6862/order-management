@@ -88,7 +88,12 @@ class OrderController extends Controller
                 })
                 ->sum('quantity');
 
-            $available = $imported - $sold;
+            // Get total manually exported
+            $exported = \App\Models\InventoryExportItem::where('product_id', $item->product_id)
+                ->where('size', $item->size)
+                ->sum('quantity');
+
+            $available = $imported - $sold - $exported;
 
             if ($available < $item->quantity) {
                 $allAvailable = false;
@@ -202,7 +207,7 @@ class OrderController extends Controller
         
         // Overall order inventory status
         $order->inventory_status = $this->checkInventoryAvailability($order);
-        
+
         return view('orders.show', compact('order'));
     }
 
@@ -224,7 +229,12 @@ class OrderController extends Controller
             })
             ->sum('quantity');
 
-        $available = $imported - $sold;
+        // Get total manually exported
+        $exported = \App\Models\InventoryExportItem::where('product_id', $item->product_id)
+            ->where('size', $item->size)
+            ->sum('quantity');
+
+        $available = $imported - $sold - $exported;
         $needed = $item->quantity;
 
         return [

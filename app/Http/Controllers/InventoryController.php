@@ -38,6 +38,7 @@ class InventoryController extends Controller
                 'sizes' => [],
                 'total_imported' => 0,
                 'total_sold' => 0,
+                'total_exported' => 0,
                 'total_stock' => 0,
             ];
 
@@ -55,17 +56,24 @@ class InventoryController extends Controller
                     })
                     ->sum('quantity');
 
-                $stock = $imported - $sold;
+                // Get total manually exported for this product and size
+                $exported = \App\Models\InventoryExportItem::where('product_id', $product->id)
+                    ->where('size', $size)
+                    ->sum('quantity');
 
-                if ($imported > 0 || $sold > 0) {
+                $stock = $imported - $sold - $exported;
+
+                if ($imported > 0 || $sold > 0 || $exported > 0) {
                     $productInventory['sizes'][$size] = [
                         'imported' => $imported,
                         'sold' => $sold,
+                        'exported' => $exported,
                         'stock' => $stock,
                     ];
 
                     $productInventory['total_imported'] += $imported;
                     $productInventory['total_sold'] += $sold;
+                    $productInventory['total_exported'] += $exported;
                     $productInventory['total_stock'] += $stock;
                 }
             }
@@ -102,16 +110,25 @@ class InventoryController extends Controller
                 })
                 ->get();
 
+            // Get manual exports
+            $exports = \App\Models\InventoryExportItem::with('inventoryExport')
+                ->where('product_id', $product->id)
+                ->where('size', $size)
+                ->get();
+
             $totalImported = $imports->sum('quantity');
             $totalSold = $sales->sum('quantity');
+            $totalExported = $exports->sum('quantity');
 
-            if ($totalImported > 0 || $totalSold > 0) {
+            if ($totalImported > 0 || $totalSold > 0 || $totalExported > 0) {
                 $details[$size] = [
                     'imports' => $imports,
                     'sales' => $sales,
+                    'exports' => $exports,
                     'total_imported' => $totalImported,
                     'total_sold' => $totalSold,
-                    'stock' => $totalImported - $totalSold,
+                    'total_exported' => $totalExported,
+                    'stock' => $totalImported - $totalSold - $totalExported,
                 ];
             }
         }

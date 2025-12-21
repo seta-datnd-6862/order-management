@@ -96,6 +96,10 @@
                                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                     <i class="fas fa-box-open mr-2"></i>Đơn nhập kho
                                 </a>
+                                <a href="{{ route('inventory.exports.index') }}" 
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <i class="fas fa-truck-loading mr-2"></i>Đơn xuất kho
+                                </a>
                             </div>
                         </div>
                         

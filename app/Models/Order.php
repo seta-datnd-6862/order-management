@@ -100,6 +100,14 @@ class Order extends Model
         return 0;
     }
 
+    public function getDiscountPercentageAttribute()
+    {
+        if ($this->total_amount > 0) {
+            return ($this->discount_amount / $this->total_amount) * 100;
+        }
+        return 0;
+    }
+
     public function calculateTotal()
     {
         $this->total_amount = $this->items->sum(function ($item) {

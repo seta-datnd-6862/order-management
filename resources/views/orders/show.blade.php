@@ -292,6 +292,18 @@
                         @endif
                     </div>
 
+                    <div class="bg-yellow-50 rounded-lg p-3">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-600">Giảm giá:</span>
+                            <span class="font-semibold text-yellow-700">{{ number_format($order->discount_amount) }}đ</span>
+                        </div>
+                        @if($order->discount_amount > 0)
+                        <div class="text-xs text-gray-500">
+                            ({{ number_format($order->discount_percentage, 1) }}% tổng đơn)
+                        </div>
+                        @endif
+                    </div>
+
                     <div class="bg-orange-50 rounded-lg p-3">
                         <div class="flex justify-between">
                             <span class="text-sm text-gray-600">Còn phải thanh toán:</span>

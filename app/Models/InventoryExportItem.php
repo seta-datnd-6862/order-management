@@ -4,10 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class InventoryImportItem extends Model
+class InventoryExportItem extends Model
 {
     protected $fillable = [
-        'inventory_import_id',
+        'inventory_export_id',
         'product_id',
         'size',
         'quantity',
@@ -23,9 +23,9 @@ class InventoryImportItem extends Model
         ];
     }
 
-    public function inventoryImport()
+    public function inventoryExport()
     {
-        return $this->belongsTo(InventoryImport::class);
+        return $this->belongsTo(InventoryExport::class);
     }
 
     public function product()
