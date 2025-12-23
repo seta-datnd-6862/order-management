@@ -40,6 +40,13 @@ class OrderController extends Controller
             $query->where('customer_id', $request->customer_id);
         }
 
+        // Filter by product
+        if ($request->filled('product_id')) {
+            $query->whereHas('items', function ($q) use ($request) {
+                $q->where('product_id', $request->product_id);
+            });
+        }
+
         $orders = $query->latest()->paginate(20);
 
         // Check inventory availability for ORDERED status
@@ -63,8 +70,9 @@ class OrderController extends Controller
 
         $statuses = Order::getStatuses();
         $customers = Customer::orderBy('name')->get();
+        $products = Product::orderBy('name')->get();
 
-        return view('orders.index', compact('orders', 'statuses', 'customers'));
+        return view('orders.index', compact('orders', 'statuses', 'customers', 'products'));
     }
 
     /**

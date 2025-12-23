@@ -15,7 +15,7 @@
 
 <!-- Filters -->
 <div class="bg-white rounded-lg shadow mb-6 p-4">
-    <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+    <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         <input type="text" name="search" value="{{ request('search') }}" 
                placeholder="Tìm theo tên khách..."
                class="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
@@ -39,6 +39,15 @@
             @endforeach
         </select>
         
+        <select name="product_id" class="chosen-select px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+            <option value="">-- Tất cả sản phẩm --</option>
+            @foreach($products as $product)
+            <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>
+                {{ $product->name }}
+            </option>
+            @endforeach
+        </select>
+        
         <div class="flex gap-2">
             <button type="submit" class="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
                 <i class="fas fa-filter mr-1"></i> Lọc
@@ -49,6 +58,12 @@
         </div>
     </form>
 </div>
+
+@if($orders->hasPages())
+<div class="mb-6">
+    {{ $orders->appends(request()->query())->links() }}
+</div>
+@endif
 
 <!-- Bulk Actions -->
 <div x-data="bulkActions()" x-cloak>
@@ -236,6 +251,14 @@
 
 @push('scripts')
 <script>
+
+$(document).ready(function() {
+    $('.chosen-select').chosen({
+        width: '100%',
+        no_results_text: 'Không tìm thấy sản phẩm!'
+    });
+});
+
 function updateStatus(orderId, status) {
     fetch(`/orders/${orderId}/status`, {
         method: 'PATCH',
