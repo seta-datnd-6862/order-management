@@ -47,7 +47,7 @@ class OrderController extends Controller
             });
         }
 
-        $orders = $query->latest()->paginate(20);
+        $orders = $query->orderBy('created_at')->paginate(20);
 
         // Check inventory availability for ORDERED status
         if ($request->filled('status') && $request->status === Order::STATUS_ORDERED) {
