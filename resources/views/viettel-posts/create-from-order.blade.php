@@ -77,38 +77,6 @@
                     </h3>
 
                     <div class="space-y-4 mb-6">
-                        <!-- Services Section - Initially Hidden -->
-                        <div id="services-section" class="hidden mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Chọn dịch vụ vận chuyển <span class="text-red-500">*</span>
-                            </label>
-                            
-                            <!-- Services will be loaded here -->
-                            <div id="services-list" class="space-y-2">
-                                <!-- Dynamic service cards -->
-                            </div>
-                            
-                            <input type="hidden" name="service_code" id="selected-service-code" required>
-                        </div>
-
-                        <!-- Loading State -->
-                        <div id="services-loading" class="hidden mb-4">
-                            <div class="flex items-center justify-center py-8">
-                                <i class="fas fa-spinner fa-spin text-2xl text-indigo-600 mr-3"></i>
-                                <span class="text-gray-600">Đang tải dịch vụ...</span>
-                            </div>
-                        </div>
-
-                        <!-- Error State -->
-                        <div id="services-error" class="hidden mb-4">
-                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                                <p class="text-red-600 text-sm">
-                                    <i class="fas fa-exclamation-circle mr-2"></i>
-                                    <span id="services-error-message"></span>
-                                </p>
-                            </div>
-                        </div>
-
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Trọng lượng (gram) <span class="text-red-500">*</span>
@@ -126,7 +94,39 @@
                             <p class="mt-1 text-xs text-gray-500">Ước tính trọng lượng hàng hóa</p>
                         </div>
 
-                        <!-- NEW: Money Collection -->
+                        <!-- Services Section - Initially Hidden -->
+                        <div id="services-section" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Chọn dịch vụ vận chuyển <span class="text-red-500">*</span>
+                            </label>
+                            
+                            <!-- Services will be loaded here -->
+                            <div id="services-list" class="space-y-2">
+                                <!-- Dynamic service cards -->
+                            </div>
+                            
+                            <input type="hidden" name="service_code" id="selected-service-code" required>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="services-loading" class="hidden">
+                            <div class="flex items-center justify-center py-8">
+                                <i class="fas fa-spinner fa-spin text-2xl text-indigo-600 mr-3"></i>
+                                <span class="text-gray-600">Đang tải dịch vụ...</span>
+                            </div>
+                        </div>
+
+                        <!-- Error State -->
+                        <div id="services-error" class="hidden">
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                                <p class="text-red-600 text-sm">
+                                    <i class="fas fa-exclamation-circle mr-2"></i>
+                                    <span id="services-error-message"></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Money Collection -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">
                                 Tiền thu hộ (VNĐ) <span class="text-red-500">*</span>
@@ -145,30 +145,7 @@
                             <p class="mt-1 text-xs text-gray-500">Số tiền hàng cần thu hộ từ người nhận</p>
                         </div>
 
-                        <!-- NEW: Shipping Fee Preview -->
-                        <div id="shipping-fee-preview" class="hidden p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-blue-900">
-                                    <i class="fas fa-truck mr-1"></i>Phí vận chuyển dự kiến:
-                                </span>
-                                <span class="text-lg font-bold text-blue-600" id="shipping-fee-amount">0đ</span>
-                            </div>
-                            <div class="text-xs text-blue-700 space-y-1">
-                                <div class="flex justify-between">
-                                    <span>Thời gian dự kiến:</span>
-                                    <span id="shipping-time" class="font-medium">-</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span>Trọng lượng quy đổi:</span>
-                                    <span id="exchange-weight" class="font-medium">-</span>
-                                </div>
-                            </div>
-                            <button type="button" id="recalculate-btn" class="mt-2 text-xs text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-sync-alt mr-1"></i>Tính lại
-                            </button>
-                        </div>
-
-                        <!-- NEW: Payment By (Who pays shipping) -->
+                        <!-- Payment By (Who pays shipping) -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Người trả phí vận chuyển <span class="text-red-500">*</span>
@@ -207,7 +184,7 @@
                             <textarea name="note" 
                                       rows="2" 
                                       class="w-full px-4 py-2 border border-gray-300 rounded-lg"
-                                      placeholder="Ghi chú cho đơn vận chuyển...">{{ old('note') }}</textarea>
+                                      placeholder="Ghi chú cho đơn vận chuyển...">{{ old('note', 'Cho xem hàng') }}</textarea>
                         </div>
                     </div>
 
@@ -249,7 +226,7 @@
                     </div>
                 </div>
 
-                <!-- NEW: Shipping Summary -->
+                <!-- Shipping Summary -->
                 <div id="shipping-summary" class="border-t pt-4 hidden">
                     <h4 class="text-sm font-semibold text-gray-900 mb-3">Tổng cước</h4>
                     <div class="space-y-2 text-sm">
@@ -287,12 +264,11 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    let shippingFeeData = null;
     let availableServices = [];
     let selectedServiceCode = null;
+    
     /**
      * Load all services with prices
-     * Gọi khi user nhập đủ thông tin
      */
     function loadServices() {
         const receiverAddress = $('textarea[name="receiver_address"]').val();
@@ -340,16 +316,20 @@ $(document).ready(function() {
     }
 
     /**
-     * Render service cards
+     * Render service cards (SORTED by price - lowest first)
      */
     function renderServices(services) {
-        const html = services.map((service, index) => {
-            const isRecommended = index === 0; // First = recommended
+        // SORT services by price (lowest first) - GIÁ RẺ NHẤT LÊN ĐẦU
+        const sortedServices = [...services].sort((a, b) => a.MONEY_TOTAL - b.MONEY_TOTAL);
+        
+        const html = sortedServices.map((service, index) => {
+            const isRecommended = index === 0; // First (cheapest) = recommended
             
             return `
                 <div class="service-card border-2 rounded-lg p-4 cursor-pointer transition-all hover:border-indigo-500 ${isRecommended ? 'border-indigo-300 bg-indigo-50' : 'border-gray-200'}"
-                    data-service-code="${service.SERVICE_CODE}"
-                    onclick="selectService('${service.SERVICE_CODE}')">
+                     data-service-code="${service.SERVICE_CODE}"
+                     data-money-total="${service.MONEY_TOTAL}"
+                     data-kpi-ht="${service.KPI_HT}">
                     
                     <div class="flex items-center justify-between">
                         <div class="flex items-center flex-1">
@@ -368,7 +348,7 @@ $(document).ready(function() {
                                 </div>
                                 <p class="text-sm text-gray-600">
                                     <i class="far fa-clock mr-1"></i>
-                                    Dự kiến giao sau ${Math.round(service.KPI_HT)} giờ
+                                    Dự kiến giao sau ${service.KPI_HT} giờ
                                 </p>
                             </div>
                         </div>
@@ -386,10 +366,10 @@ $(document).ready(function() {
                         <!-- Radio -->
                         <div class="ml-4">
                             <input type="radio" 
-                                name="service_radio" 
-                                value="${service.SERVICE_CODE}"
-                                class="w-5 h-5 text-indigo-600"
-                                ${isRecommended ? 'checked' : ''}>
+                                   name="service_radio" 
+                                   value="${service.SERVICE_CODE}"
+                                   class="w-5 h-5 text-indigo-600"
+                                   ${isRecommended ? 'checked' : ''}>
                         </div>
                     </div>
                 </div>
@@ -398,14 +378,20 @@ $(document).ready(function() {
         
         $('#services-list').html(html);
         
-        // Auto-select first service
-        if (services.length > 0) {
-            selectService(services[0].SERVICE_CODE);
+        // Add click handlers
+        $('.service-card').on('click', function() {
+            const serviceCode = $(this).data('service-code');
+            selectService(serviceCode);
+        });
+        
+        // Auto-select first (cheapest) service
+        if (sortedServices.length > 0) {
+            selectService(sortedServices[0].SERVICE_CODE);
         }
     }
 
     /**
-     * Select service
+     * Select service and UPDATE SUMMARY
      */
     function selectService(serviceCode) {
         selectedServiceCode = serviceCode;
@@ -420,7 +406,7 @@ $(document).ready(function() {
         // Update radio
         $(`input[value="${serviceCode}"]`).prop('checked', true);
         
-        // Update summary
+        // Update summary with selected service
         updateSummary(serviceCode);
     }
 
@@ -438,9 +424,11 @@ $(document).ready(function() {
         $('#summary-shipping').text(formatCurrency(service.MONEY_TOTAL));
         
         if (paymentBy === 'receiver') {
+            // Người nhận trả phí ship → Tổng = Thu hộ + Phí ship
             $('#summary-total').text(formatCurrency(moneyCollection + service.MONEY_TOTAL));
             $('#payment-note').text('Người nhận trả phí vận chuyển');
         } else {
+            // Người gửi trả phí ship → Tổng = Chỉ thu hộ
             $('#summary-total').text(formatCurrency(moneyCollection));
             $('#payment-note').text('Shop trả phí vận chuyển');
         }
@@ -449,13 +437,14 @@ $(document).ready(function() {
     }
 
     /**
-     * Get service icon
+     * Get service icon - UPDATED with new codes
      */
     function getServiceIcon(serviceCode) {
         const icons = {
-            'PHS': '<i class="fas fa-rocket text-orange-500 text-xl"></i>',
-            'VCN': '<i class="fas fa-shipping-fast text-blue-500 text-xl"></i>',
-            'VCBO': '<i class="fas fa-box text-green-500 text-xl"></i>',
+            'SHT': '<i class="fas fa-rocket text-orange-500 text-xl"></i>',      // Hỏa tốc
+            'SCN': '<i class="fas fa-shipping-fast text-blue-500 text-xl"></i>', // Nhanh
+            'STK': '<i class="fas fa-box text-green-500 text-xl"></i>',          // Tiêu chuẩn
+            'VMCH': '<i class="fas fa-undo text-purple-500 text-xl"></i>',       // Miễn cước hoàn
         };
         return icons[serviceCode] || '<i class="fas fa-truck text-gray-500 text-xl"></i>';
     }
@@ -469,59 +458,38 @@ $(document).ready(function() {
     }
 
     /**
-     * Trigger load services
+     * Format currency
+     */
+    function formatCurrency(value) {
+        return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
+    }
+    
+    /**
+     * Trigger load services when input changes
      */
     $('#product-weight, textarea[name="receiver_address"]').on('blur', function() {
         loadServices();
     });
 
+    /**
+     * Update summary when money collection changes
+     */
     $('#money-collection').on('input', function() {
         if (selectedServiceCode) {
             updateSummary(selectedServiceCode);
         }
     });
 
+    /**
+     * Update summary when payment_by changes
+     */
     $('input[name="payment_by"]').on('change', function() {
         if (selectedServiceCode) {
             updateSummary(selectedServiceCode);
         }
     });
-    
-    // Format currency
-    function formatCurrency(value) {
-        return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
-    }
-    
-    // Show toast notification
-    function showToast(type, message) {
-        const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
-        const icon = type === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle';
-        
-        const toast = $('<div>')
-            .addClass(`fixed top-20 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`)
-            .html(`<i class="fas ${icon} mr-2"></i>${message}`);
-        
-        $('body').append(toast);
-        
-        setTimeout(function() {
-            toast.fadeOut(function() {
-                $(this).remove();
-            });
-        }, 3000);
-    }
-    
-    $('#money-collection').on('input', function() {
-        if (shippingFeeData) {
-            updateSummary();
-        }
-    });
-    
-    $('input[name="payment_by"]').on('change', function() {
-        if (shippingFeeData) {
-            updateSummary();
-        }
-    });
 
+    // Auto-load services on page load
     loadServices();
 });
 </script>
