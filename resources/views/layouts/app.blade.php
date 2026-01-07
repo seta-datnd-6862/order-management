@@ -102,6 +102,12 @@
                                 </a>
                             </div>
                         </div>
+
+                        <!-- NEW: Viettel Post Menu -->
+                        <a href="{{ route('viettel-posts.index') }}" 
+                           class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('viettel-posts.*') ? 'bg-green-100 text-green-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                            <i class="fas fa-truck mr-1"></i> Viettel Post
+                        </a>
                         
                         <a href="{{ route('customers.index') }}" 
                            class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('customers.*') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
@@ -118,7 +124,7 @@
         
         <!-- Mobile menu -->
         <div class="md:hidden border-t">
-            <div class="grid grid-cols-5 py-2">
+            <div class="grid grid-cols-6 py-2">
                 <a href="{{ route('orders.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('orders.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-shopping-cart text-lg"></i>
                     <span class="text-xs mt-1">Đơn hàng</span>
@@ -127,9 +133,14 @@
                     <i class="fas fa-chart-bar text-lg"></i>
                     <span class="text-xs mt-1">Tổng hợp</span>
                 </a>
-                <a href="{{ route('inventory.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('inventory.*') ? 'text-indigo-600' : 'text-gray-600' }}">
+                <a href="{{ route('inventory.imports.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('inventory.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-warehouse text-lg"></i>
                     <span class="text-xs mt-1">Kho</span>
+                </a>
+                <!-- NEW: Viettel Post Mobile Menu -->
+                <a href="{{ route('viettel-posts.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('viettel-posts.*') ? 'text-green-600' : 'text-gray-600' }}">
+                    <i class="fas fa-truck text-lg"></i>
+                    <span class="text-xs mt-1">Viettel</span>
                 </a>
                 <a href="{{ route('customers.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('customers.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-users text-lg"></i>
@@ -155,6 +166,13 @@
     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 5000)"
          class="fixed top-20 right-4 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
         <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
+    </div>
+    @endif
+
+    @if(session('info'))
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 3000)"
+         class="fixed top-20 right-4 z-50 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <i class="fas fa-info-circle mr-2"></i>{{ session('info') }}
     </div>
     @endif
 

@@ -35,6 +35,18 @@
                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                 <i class="fas fa-edit mr-1"></i>Sửa
             </a>
+            {{-- NEW: Viettel Post Button --}}
+            @if($order->hasViettelOrder())
+                <a href="{{ route('viettel-posts.show', $order->viettelOrder) }}" 
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <i class="fas fa-truck mr-1"></i>Xem vận chuyển
+                </a>
+            @else
+                <a href="{{ route('viettel-posts.create-from-order', $order) }}" 
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    <i class="fas fa-plus-circle mr-1"></i>Tạo đơn Viettel Post
+                </a>
+            @endif
             <form action="{{ route('orders.destroy', $order) }}" method="POST" class="inline">
                 @csrf
                 @method('DELETE')
@@ -117,6 +129,36 @@
                                  class="w-64 h-64 object-cover rounded-lg border hover:opacity-90 transition">
                         </a>
                     </div>
+                    @endif
+
+                    @if($order->hasViettelOrder())
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Trạng thái</p>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $order->viettelOrder->status_color }}">
+                                    {{ $order->viettelOrder->status_label }}
+                                </span>
+                            </div>
+                            
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">Dịch vụ</p>
+                                <p class="text-sm font-medium">{{ $order->viettelOrder->service_name }}</p>
+                            </div>
+                            
+                            @if($order->viettelOrder->money_collection > 0)
+                            <div class="pt-3 border-t">
+                                <p class="text-xs text-gray-500 mb-1">Tiền thu hộ</p>
+                                <p class="text-lg font-bold text-green-600">
+                                    {{ $order->viettelOrder->formatted_money_collection }}
+                                </p>
+                            </div>
+                            @endif
+                            
+                            <a href="{{ route('viettel-posts.show', $order->viettelOrder) }}" 
+                            class="block text-center px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 text-sm font-medium mt-3">
+                                Xem chi tiết vận chuyển →
+                            </a>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -319,7 +361,7 @@
                     @endif
                 </div>
             </div>
-
+            
             <!-- Quick Status Update -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="font-semibold mb-3 flex items-center">

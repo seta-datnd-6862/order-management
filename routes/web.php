@@ -8,6 +8,8 @@ use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryImportController;
 use App\Http\Controllers\InventoryExportController;
+use App\Http\Controllers\ViettelPostController;
+
 
 // Trang chủ - redirect đến orders
 Route::get('/', function () {
@@ -40,4 +42,29 @@ Route::prefix('inventory')->name('inventory.')->group(function () {
 
     // Đơn xuất kho
     Route::resource('exports', InventoryExportController::class);
+});
+    
+// Viettel Post routes
+Route::prefix('viettel-posts')->name('viettel-posts.')->group(function () {
+    // Danh sách
+    Route::get('/', [ViettelPostController::class, 'index'])->name('index');
+    
+    // Import từ mã vận chuyển có sẵn
+    Route::get('/import', [ViettelPostController::class, 'importForm'])->name('import-form');
+    Route::post('/import', [ViettelPostController::class, 'import'])->name('import');
+    
+    // Tạo từ Order
+    Route::get('/create-from-order/{order}', [ViettelPostController::class, 'createFromOrder'])->name('create-from-order');
+    Route::post('/store-from-order/{order}', [ViettelPostController::class, 'storeFromOrder'])->name('store-from-order');
+
+    // NEW: Calculate shipping fee (AJAX)
+    Route::post('/calculate-shipping', [ViettelPostController::class, 'calculateShipping'])->name('calculate-shipping');
+    // NEW: Get all services with prices
+    Route::post('/get-services', [ViettelPostController::class, 'getServicesWithPrices'])
+        ->name('get-services');
+    
+    // Chi tiết & actions
+    Route::get('/{viettelOrder}', [ViettelPostController::class, 'show'])->name('show');
+    Route::patch('/{viettelOrder}/status', [ViettelPostController::class, 'updateStatus'])->name('update-status');
+    Route::delete('/{viettelOrder}', [ViettelPostController::class, 'destroy'])->name('destroy');
 });

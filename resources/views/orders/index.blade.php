@@ -172,7 +172,7 @@
                         <img src="{{ $item->image_url }}" class="w-10 h-10 object-cover rounded mr-2">
                         @endif
                         <div>
-                            <p class="font-medium">{{ Str::limit($item->product->name, 20) }}</p>
+                            <p class="font-medium">{{ Str::limit($item->product?->name, 20) }}</p>
                             <p class="text-xs text-gray-500">{{ $item->size }} × {{ $item->quantity }}</p>
                         </div>
                     </div>

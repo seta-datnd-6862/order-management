@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
+use App\Models\ViettelOrder;
 
 class Order extends Model
 {
@@ -66,6 +67,18 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    // Thêm relationship
+    public function viettelOrder()
+    {
+        return $this->hasOne(ViettelOrder::class);
+    }
+
+    // Helper method
+    public function hasViettelOrder(): bool
+    {
+        return $this->viettelOrder()->exists();
     }
 
     public function getStatusLabelAttribute()
