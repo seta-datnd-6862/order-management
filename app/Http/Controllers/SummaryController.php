@@ -11,18 +11,37 @@ class SummaryController extends Controller
 {
     public function index(Request $request)
     {
-        $status = $request->get('status', Order::STATUS_PREPARING);
-        $date = $request->get('date');
+        $status = $request->get('status');
+        $fromDate = $request->get('from_date');
+        $toDate = $request->get('to_date');
 
-        $query = Order::where('status', $status);
+        $query = Order::query();
         
-        if ($date) {
-            $query->whereDate('created_at', $date);
+        if ($status) {
+            $query->where('status', $status);
+        }
+        
+        if ($fromDate) {
+            $query->whereDate('created_at', '>=', $fromDate);
+        }
+        
+        if ($toDate) {
+            $query->whereDate('created_at', '<=', $toDate);
         }
 
         $orderIds = $query->pluck('id');
+        
+        // Tính toán tổng hợp tài chính
+        $orders = Order::whereIn('id', $orderIds)->get();
+        $financialStats = [
+            'total_amount' => $orders->sum('total_amount'),
+            'deposit_amount' => $orders->sum('deposit_amount'),
+            'discount_amount' => $orders->sum('discount_amount'),
+            'remaining_amount' => $orders->sum('remaining_amount'),
+        ];
 
-        $summary = OrderItem::whereIn('order_id', $orderIds)
+        // Lấy tất cả items và group by product_id
+        $items = OrderItem::whereIn('order_id', $orderIds)
             ->with('product')
             ->select(
                 'product_id',
@@ -31,22 +50,26 @@ class SummaryController extends Controller
                 DB::raw('MIN(image) as sample_image')
             )
             ->groupBy('product_id', 'size')
-            ->get()
-            ->map(function ($item) {
-                return [
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product->name,
-                    'product_image' => $item->product->image_url,
-                    'sample_image' => $item->sample_image ? asset('storage/' . $item->sample_image) : null,
-                    'size' => $item->size,
-                    'total_quantity' => $item->total_quantity,
-                ];
-            })
-            ->sortBy([
-                ['product_name', 'asc'],
-                ['size', 'asc'],
-            ])
-            ->values();
+            ->get();
+
+        // Group lại theo product_id
+        $summary = $items->groupBy('product_id')->map(function ($productItems) {
+            $firstItem = $productItems->first();
+            
+            return [
+                'product_id' => $firstItem->product_id,
+                'product_name' => $firstItem->product->name,
+                'product_image' => $firstItem->product->image_url,
+                'sizes' => $productItems->map(function ($item) {
+                    return [
+                        'size' => $item->size,
+                        'quantity' => $item->total_quantity,
+                        'sample_image' => $item->sample_image ? asset('storage/' . $item->sample_image) : null,
+                    ];
+                })->sortBy('size')->values()->toArray(),
+                'total_quantity' => $productItems->sum('total_quantity'),
+            ];
+        })->sortBy('product_name')->values();
 
         $totalItems = $summary->sum('total_quantity');
         $totalProducts = $summary->count();
@@ -59,16 +82,19 @@ class SummaryController extends Controller
             'totalItems', 
             'totalProducts', 
             'totalOrders',
+            'financialStats',
             'statuses',
             'status',
-            'date'
+            'fromDate',
+            'toDate'
         ));
     }
 
     public function moveToNextStatus(Request $request)
     {
         $currentStatus = $request->input('current_status');
-        $date = $request->input('date');
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
 
         $statusFlow = [
             Order::STATUS_NEW => Order::STATUS_PREPARING,
@@ -88,8 +114,12 @@ class SummaryController extends Controller
 
         $query = Order::where('status', $currentStatus);
         
-        if ($date) {
-            $query->whereDate('created_at', $date);
+        if ($fromDate) {
+            $query->whereDate('created_at', '>=', $fromDate);
+        }
+        
+        if ($toDate) {
+            $query->whereDate('created_at', '<=', $toDate);
         }
 
         $count = $query->count();
