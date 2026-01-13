@@ -380,6 +380,21 @@
             });
         }
 
+        function isMobileDevice() {
+            // 1. Check userAgent
+            const mobileKeywords = /Android|webOS|iPhone|iPad|iPod|Linux|BlackBerry|IEMobile|Opera Mini/i;
+
+            if (mobileKeywords.test(navigator.userAgent)) {
+                return true;
+            }
+            
+            // 2. Check touch + screen size (cho tablet mode trên desktop)
+            const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+            const isSmallScreen = window.innerWidth <= 768;
+            
+            return hasTouch && isSmallScreen;
+        }
+
         $(document).ready(function() {
             $('.chosen-select').chosen({
                 width: '100%',

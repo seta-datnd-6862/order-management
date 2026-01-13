@@ -64,9 +64,11 @@ class InventoryImportController extends Controller
             'note' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.size' => 'required|string',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.note' => 'nullable|string',
+            'items.*.product_note' => 'nullable|string',
+            'items.*.sizes' => 'required|array|min:1',
+            'items.*.sizes.*.size' => 'required|string',
+            'items.*.sizes.*.quantity' => 'required|integer|min:1',
+            'items.*.sizes.*.note' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -78,13 +80,16 @@ class InventoryImportController extends Controller
                 'note' => $validated['note'],
             ]);
 
+            // Process each product with its sizes
             foreach ($validated['items'] as $item) {
-                $import->items()->create([
-                    'product_id' => $item['product_id'],
-                    'size' => $item['size'],
-                    'quantity' => $item['quantity'],
-                    'note' => $item['note'] ?? null,
-                ]);
+                foreach ($item['sizes'] as $sizeData) {
+                    $import->items()->create([
+                        'product_id' => $item['product_id'],
+                        'size' => $sizeData['size'],
+                        'quantity' => $sizeData['quantity'],
+                        'note' => $sizeData['note'] ?? null,
+                    ]);
+                }
             }
 
             DB::commit();
@@ -121,11 +126,13 @@ class InventoryImportController extends Controller
             'import_date' => 'required|date',
             'note' => 'nullable|string',
             'items' => 'required|array|min:1',
-            'items.*.id' => 'nullable|exists:inventory_import_items,id',
             'items.*.product_id' => 'required|exists:products,id',
-            'items.*.size' => 'required|string',
-            'items.*.quantity' => 'required|integer|min:1',
-            'items.*.note' => 'nullable|string',
+            'items.*.product_note' => 'nullable|string',
+            'items.*.sizes' => 'required|array|min:1',
+            'items.*.sizes.*.id' => 'nullable|exists:inventory_import_items,id',
+            'items.*.sizes.*.size' => 'required|string',
+            'items.*.sizes.*.quantity' => 'required|integer|min:1',
+            'items.*.sizes.*.note' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
@@ -137,36 +144,42 @@ class InventoryImportController extends Controller
                 'note' => $validated['note'],
             ]);
 
-            // Track existing item IDs from request
-            $existingItemIds = collect($validated['items'])
-                ->pluck('id')
-                ->filter()
-                ->toArray();
+            // Collect all size IDs from the request
+            $existingSizeIds = [];
+            foreach ($validated['items'] as $item) {
+                foreach ($item['sizes'] as $sizeData) {
+                    if (!empty($sizeData['id'])) {
+                        $existingSizeIds[] = $sizeData['id'];
+                    }
+                }
+            }
 
-            // Delete items not in the request
-            $import->items()->whereNotIn('id', $existingItemIds)->delete();
+            // Delete items (sizes) not in the request
+            $import->items()->whereNotIn('id', $existingSizeIds)->delete();
 
             // Update or create items
-            foreach ($validated['items'] as $itemData) {
-                if (!empty($itemData['id'])) {
-                    // Update existing item
-                    $item = $import->items()->find($itemData['id']);
-                    if ($item) {
-                        $item->update([
-                            'product_id' => $itemData['product_id'],
-                            'size' => $itemData['size'],
-                            'quantity' => $itemData['quantity'],
-                            'note' => $itemData['note'] ?? null,
+            foreach ($validated['items'] as $item) {
+                foreach ($item['sizes'] as $sizeData) {
+                    if (!empty($sizeData['id'])) {
+                        // Update existing size
+                        $sizeItem = $import->items()->find($sizeData['id']);
+                        if ($sizeItem) {
+                            $sizeItem->update([
+                                'product_id' => $item['product_id'],
+                                'size' => $sizeData['size'],
+                                'quantity' => $sizeData['quantity'],
+                                'note' => $sizeData['note'] ?? null,
+                            ]);
+                        }
+                    } else {
+                        // Create new size
+                        $import->items()->create([
+                            'product_id' => $item['product_id'],
+                            'size' => $sizeData['size'],
+                            'quantity' => $sizeData['quantity'],
+                            'note' => $sizeData['note'] ?? null,
                         ]);
                     }
-                } else {
-                    // Create new item
-                    $import->items()->create([
-                        'product_id' => $itemData['product_id'],
-                        'size' => $itemData['size'],
-                        'quantity' => $itemData['quantity'],
-                        'note' => $itemData['note'] ?? null,
-                    ]);
                 }
             }
 

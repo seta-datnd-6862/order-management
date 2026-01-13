@@ -130,7 +130,7 @@
             <div class="mt-6 p-4 bg-blue-50 rounded-lg">
                 <p class="text-sm text-blue-800">
                     <i class="fas fa-info-circle mr-1"></i>
-                    Nhập đầy đủ thông tin sản phẩm, size và số lượng cho mỗi mặt hàng.
+                    Mỗi sản phẩm có thể thêm nhiều size với số lượng khác nhau.
                 </p>
             </div>
         </div>
@@ -157,6 +157,7 @@ var productsData = <?php echo json_encode($productsData); ?>;
 var itemIndex = 0;
 
 $(document).ready(function() {
+
     // Add first item by default
     addItem();
     
@@ -173,10 +174,6 @@ $(document).ready(function() {
 
 function addItem() {
     var sizes = <?php echo $sizesJson; ?>;
-    var sizeOptions = '';
-    for (var i = 0; i < sizes.length; i++) {
-        sizeOptions += '<option value="' + sizes[i] + '">' + sizes[i] + '</option>';
-    }
     
     var itemHtml = '<div class="bg-gray-50 p-4 rounded-lg border item-row" data-index="' + itemIndex + '">' +
         '<div class="flex items-start justify-between mb-3">' +
@@ -188,39 +185,96 @@ function addItem() {
                 '<i class="fas fa-times"></i>' +
             '</button>' +
         '</div>' +
-        '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-            '<div>' +
-                '<label class="block text-sm text-gray-600 mb-1">Sản phẩm</label>' +
-                '<select name="items[' + itemIndex + '][product_id]" class="product-select chosen-select w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" required>' +
-                    '<option value="">-- Chọn sản phẩm --</option>' +
-                    '<?php echo $productsHtml; ?>' +
-                '</select>' +
+        '<div class="mb-3">' +
+            '<label class="block text-sm text-gray-600 mb-1">Sản phẩm <span class="text-red-500">*</span></label>' +
+            '<select name="items[' + itemIndex + '][product_id]" class="product-select chosen-select w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" required>' +
+                '<option value="">-- Chọn sản phẩm --</option>' +
+                '<?php echo $productsHtml; ?>' +
+            '</select>' +
+        '</div>' +
+        '<div class="mb-3">' +
+            '<label class="block text-sm text-gray-600 mb-1">Ghi chú sản phẩm</label>' +
+            '<input type="text" name="items[' + itemIndex + '][product_note]" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Ghi chú chung về sản phẩm...">' +
+        '</div>' +
+        '<div class="border-t pt-3">' +
+            '<div class="flex items-center justify-between mb-2">' +
+                '<label class="text-sm font-medium text-gray-700">Size & Số lượng <span class="text-red-500">*</span></label>' +
+                '<button type="button" class="add-size-btn px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600">' +
+                    '<i class="fas fa-plus mr-1"></i>Thêm size' +
+                '</button>' +
             '</div>' +
-            '<div>' +
-                '<label class="block text-sm text-gray-600 mb-1">Size</label>' +
-                '<select name="items[' + itemIndex + '][size]" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" required>' +
-                    '<option value="">-- Chọn size --</option>' +
-                    sizeOptions +
-                '</select>' +
-            '</div>' +
-            '<div>' +
-                '<label class="block text-sm text-gray-600 mb-1">Số lượng</label>' +
-                '<input type="number" name="items[' + itemIndex + '][quantity]" min="1" value="1" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" required>' +
-            '</div>' +
-            '<div>' +
-                '<label class="block text-sm text-gray-600 mb-1">Ghi chú</label>' +
-                '<input type="text" name="items[' + itemIndex + '][note]" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" placeholder="Ghi chú về sản phẩm...">' +
+            '<div class="sizes-container space-y-2">' +
+                '<!-- Sizes will be added here -->' +
             '</div>' +
         '</div>' +
     '</div>';
     
     $('#itemsContainer').append(itemHtml);
     
+    // Add first size by default
+    addSize(itemIndex);
+    
     itemIndex++;
     updateItemNumbers();
     updateTotals();
-    $('.chosen-select').chosen({ width: '100%' });
+    // device is not ipad
+    
+    if (!isMobileDevice()) {
+        $('.chosen-select').chosen({ width: '100%' });
+    }
+
 }
+
+// Add size to a product item
+$(document).on('click', '.add-size-btn', function() {
+    var $itemRow = $(this).closest('.item-row');
+    var index = $itemRow.data('index');
+    addSize(index);
+});
+
+function addSize(itemIndex) {
+    var sizes = <?php echo $sizesJson; ?>;
+    var sizeOptions = '';
+    for (var i = 0; i < sizes.length; i++) {
+        sizeOptions += '<option value="' + sizes[i] + '">' + sizes[i] + '</option>';
+    }
+    
+    var sizeIndex = $('.item-row[data-index="' + itemIndex + '"] .size-row').length;
+    
+    var sizeHtml = '<div class="size-row flex items-center gap-2 bg-white p-2 rounded border">' +
+        '<div class="flex-1">' +
+            '<select name="items[' + itemIndex + '][sizes][' + sizeIndex + '][size]" class="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-indigo-500 text-sm" required>' +
+                '<option value="">-- Size --</option>' +
+                sizeOptions +
+            '</select>' +
+        '</div>' +
+        '<div class="flex-1">' +
+            '<input type="number" name="items[' + itemIndex + '][sizes][' + sizeIndex + '][quantity]" min="1" value="1" class="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="SL" required>' +
+        '</div>' +
+        '<div class="flex-1">' +
+            '<input type="text" name="items[' + itemIndex + '][sizes][' + sizeIndex + '][note]" class="w-full px-2 py-1 border rounded focus:ring-2 focus:ring-indigo-500 text-sm" placeholder="Ghi chú size">' +
+        '</div>' +
+        '<button type="button" class="remove-size-btn text-red-600 hover:text-red-800 px-2">' +
+            '<i class="fas fa-times"></i>' +
+        '</button>' +
+    '</div>';
+    
+    $('.item-row[data-index="' + itemIndex + '"] .sizes-container').append(sizeHtml);
+    updateTotals();
+}
+
+// Remove size
+$(document).on('click', '.remove-size-btn', function() {
+    var $itemRow = $(this).closest('.item-row');
+    var sizeCount = $itemRow.find('.size-row').length;
+    
+    if (sizeCount > 1) {
+        $(this).closest('.size-row').remove();
+        updateTotals();
+    } else {
+        alert('Mỗi sản phẩm phải có ít nhất 1 size!');
+    }
+});
 
 // Remove item
 $(document).on('click', '.remove-item', function() {
