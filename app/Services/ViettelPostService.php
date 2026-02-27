@@ -71,9 +71,9 @@ class ViettelPostService
     public function getOrderByTrackingNumber(string $trackingNumber): ?array
     {
         try {
-            $response = Http::timeout(10)->withHeaders([
+            $response = Http::timeout(20)->withHeaders([
                 'Token' => $this->token,
-            ])->get("{$this->apiUrl}/order/getOrderInfoByCode", [
+            ])->post("{$this->apiUrl}/order/detail/$trackingNumber", [
                 'ORDER_NUMBER' => $trackingNumber
             ]);
 

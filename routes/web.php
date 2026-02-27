@@ -20,6 +20,10 @@ Route::get('/', function () {
 Route::resource('customers', CustomerController::class)->except(['show']);
 
 // Sản phẩm
+Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
+Route::get('products/import', [ProductController::class, 'importView'])->name('products.import');
+Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');
+
 Route::resource('products', ProductController::class)->except(['show']);
 
 // Đơn hàng

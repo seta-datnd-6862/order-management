@@ -65,182 +65,187 @@
 </div>
 @endif
 
-<!-- Bulk Actions -->
-<div x-data="bulkActions()" x-cloak>
-    {{-- Sorting Info for ORDERED status --}}
-    @if(request('status') === 'ordered' && $orders->count() > 0)
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-        <div class="flex items-center">
-            <i class="fas fa-info-circle text-blue-600 mr-3"></i>
-            <div>
-                <p class="text-sm text-blue-800 font-medium">
-                    Đơn hàng được sắp xếp theo độ ưu tiên:
-                </p>
-                <p class="text-xs text-blue-700 mt-1">
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs mr-2">
-                        <i class="fas fa-check-circle mr-1"></i>Hàng đủ
-                    </span>
-                    →
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-xs mx-2">
-                        <i class="fas fa-exclamation-circle mr-1"></i>Hàng thiếu
-                    </span>
-                    →
-                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-xs ml-2">
-                        <i class="fas fa-times-circle mr-1"></i>Chưa có hàng
-                    </span>
-                </p>
-            </div>
+{{-- Sorting Info for ORDERED status --}}
+@if(request('status') === 'ordered' && $orders->count() > 0)
+<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+    <div class="flex items-center">
+        <i class="fas fa-info-circle text-blue-600 mr-3"></i>
+        <div>
+            <p class="text-sm text-blue-800 font-medium">
+                Đơn hàng được sắp xếp theo độ ưu tiên:
+            </p>
+            <p class="text-xs text-blue-700 mt-1">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-xs mr-2">
+                    <i class="fas fa-check-circle mr-1"></i>Hàng đủ
+                </span>
+                →
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 text-xs mx-2">
+                    <i class="fas fa-exclamation-circle mr-1"></i>Hàng thiếu
+                </span>
+                →
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-red-100 text-red-800 text-xs ml-2">
+                    <i class="fas fa-times-circle mr-1"></i>Chưa có hàng
+                </span>
+            </p>
         </div>
     </div>
-    @endif
+</div>
+@endif
 
-    <div x-show="selectedOrders.length > 0" class="bg-white rounded-lg shadow mb-4 p-4">
-        <div class="flex flex-wrap items-center gap-4">
+{{-- Select All & Bulk Actions Bar --}}
+@if($orders->count() > 0)
+<div class="bg-white rounded-lg shadow mb-4 p-4">
+    <div class="flex flex-wrap items-center gap-4">
+        <label class="flex items-center space-x-2 cursor-pointer select-none">
+            <input type="checkbox" id="select-all-checkbox" class="h-4 w-4 text-indigo-600 rounded">
+            <span class="text-sm font-medium text-gray-700">Chọn tất cả</span>
+        </label>
+
+        <div id="bulk-status-controls" class="flex flex-wrap items-center gap-4" style="display: none;">
             <span class="text-sm text-gray-600">
-                Đã chọn <strong x-text="selectedOrders.length"></strong> đơn
+                (<strong id="selected-count">0</strong>/{{ $orders->count() }} đơn)
             </span>
-            <select x-model="bulkStatus" class="px-3 py-1 border rounded-lg text-sm">
+            <select id="bulk-status-select" class="px-3 py-1 border rounded-lg text-sm">
                 <option value="">-- Chuyển trạng thái --</option>
                 @foreach($statuses as $key => $label)
                 <option value="{{ $key }}">{{ $label }}</option>
                 @endforeach
             </select>
-            <button @click="updateBulkStatus()" 
-                    :disabled="!bulkStatus"
+            <button id="bulk-apply-btn" disabled
                     class="px-4 py-1 bg-indigo-600 text-white rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50">
                 Áp dụng
             </button>
         </div>
     </div>
+</div>
+@endif
 
-    <!-- Order List -->
-    <div class="space-y-4">
-        @forelse($orders as $order)
-        <div class="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition">
-            <div class="p-4">
-                <div class="flex items-start justify-between">
-                    <div class="flex items-start space-x-3">
-                        <input type="checkbox" 
-                               value="{{ $order->id }}" 
-                               x-model="selectedOrders"
-                               class="mt-1 h-4 w-4 text-indigo-600 rounded">
-                        <div>
-                            <div class="flex items-center space-x-2 flex-wrap">
-                                <span class="font-bold text-lg">#{{ $order->id }}</span>
-                                <span class="px-2 py-1 text-xs font-medium rounded-full {{ $order->status_color }}">
-                                    {{ $order->status_label }}
+<!-- Order List -->
+<div class="space-y-4">
+    @forelse($orders as $order)
+    <div class="bg-white rounded-lg shadow overflow-hidden hover:shadow-lg transition">
+        <div class="p-4">
+            <div class="flex items-start justify-between">
+                <div class="flex items-start space-x-3">
+                    <input type="checkbox" 
+                           value="{{ $order->id }}" 
+                           class="order-checkbox mt-1 h-4 w-4 text-indigo-600 rounded">
+                    <div>
+                        <div class="flex items-center space-x-2 flex-wrap">
+                            <span class="font-bold text-lg">#{{ $order->id }}</span>
+                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ $order->status_color }}">
+                                {{ $order->status_label }}
+                            </span>
+                            
+                            {{-- Inventory Status Label for ORDERED status --}}
+                            @if(request('status') === 'ordered' && isset($order->inventory_status))
+                                @if($order->inventory_status === 'full')
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 border border-green-300">
+                                    <i class="fas fa-check-circle mr-1"></i>Hàng đủ
                                 </span>
-                                
-                                {{-- Inventory Status Label for ORDERED status --}}
-                                @if(request('status') === 'ordered' && isset($order->inventory_status))
-                                    @if($order->inventory_status === 'full')
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 border border-green-300">
-                                        <i class="fas fa-check-circle mr-1"></i>Hàng đủ
-                                    </span>
-                                    @elseif($order->inventory_status === 'partial')
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 border border-orange-300">
-                                        <i class="fas fa-exclamation-circle mr-1"></i>Hàng thiếu
-                                    </span>
-                                    @else
-                                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 border border-red-300">
-                                        <i class="fas fa-times-circle mr-1"></i>Chưa có hàng
-                                    </span>
-                                    @endif
+                                @elseif($order->inventory_status === 'partial')
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800 border border-orange-300">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>Hàng thiếu
+                                </span>
+                                @else
+                                <span class="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 border border-red-300">
+                                    <i class="fas fa-times-circle mr-1"></i>Chưa có hàng
+                                </span>
                                 @endif
-                            </div>
-                            <p class="text-gray-600 mt-1">
-                                <i class="fas fa-user mr-1"></i>{{ $order->customer->name }}
-                            </p>
-                            <p class="text-sm text-gray-500">
-                                <i class="fas fa-calendar mr-1"></i>{{ $order->created_at->format('d/m/Y H:i') }}
-                            </p>
+                            @endif
                         </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-bold text-lg text-indigo-600">
-                            {{ number_format($order->total_amount) }}đ
+                        <p class="text-gray-600 mt-1">
+                            <i class="fas fa-user mr-1"></i>{{ $order->customer->name }}
                         </p>
-                        <p class="text-sm text-gray-500">{{ $order->items->count() }} sản phẩm</p>
+                        <p class="text-sm text-gray-500">
+                            <i class="fas fa-calendar mr-1"></i>{{ $order->created_at->format('d/m/Y H:i') }}
+                        </p>
                     </div>
                 </div>
-                
-                <!-- Order Items Preview -->
-                <div class="mt-4 flex flex-wrap gap-2">
-                    @foreach($order->items->take(4) as $item)
-                    <div class="flex items-center bg-gray-50 rounded-lg p-2 text-sm">
-                        @if($item->image_url)
-                        <img src="{{ $item->image_url }}" class="w-10 h-10 object-cover rounded mr-2">
-                        @endif
-                        <div>
-                            <p class="font-medium">{{ Str::limit($item->product?->name, 20) }}</p>
-                            <p class="text-xs text-gray-500">{{ $item->size }} × {{ $item->quantity }}</p>
-                        </div>
+                <div class="text-right">
+                    <p class="font-bold text-lg text-indigo-600">
+                        {{ number_format($order->total_amount) }}đ
+                    </p>
+                    <p class="text-sm text-gray-500">{{ $order->items->count() }} sản phẩm</p>
+                </div>
+            </div>
+            
+            <!-- Order Items Preview -->
+            <div class="mt-4 flex flex-wrap gap-2">
+                @foreach($order->items->take(4) as $item)
+                <div class="flex items-center bg-gray-50 rounded-lg p-2 text-sm">
+                    @if($item->image_url)
+                    <img src="{{ $item->image_url }}" class="w-10 h-10 object-cover rounded mr-2">
+                    @endif
+                    <div>
+                        <p class="font-medium">{{ Str::limit($item->product?->name, 20) }}</p>
+                        <p class="text-xs text-gray-500">{{ $item->size }} × {{ $item->quantity }}</p>
                     </div>
-                    @endforeach
-                    @if($order->items->count() > 4)
-                    <div class="flex items-center text-gray-500 text-sm">
-                        +{{ $order->items->count() - 4 }} sản phẩm khác
-                    </div>
+                </div>
+                @endforeach
+                @if($order->items->count() > 4)
+                <div class="flex items-center text-gray-500 text-sm">
+                    +{{ $order->items->count() - 4 }} sản phẩm khác
+                </div>
+                @endif
+            </div>
+            
+            <!-- Quick Status Update -->
+            <div class="mt-4 pt-4 border-t flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-2">
+                    <span class="text-sm text-gray-500">Chuyển:</span>
+                    @php
+                        $statusFlow = [
+                            'new' => 'preparing',
+                            'preparing' => 'ordered',
+                            'ordered' => 'shipping',
+                            'shipping' => 'delivered',
+                        ];
+                        $nextStatus = $statusFlow[$order->status] ?? null;
+                    @endphp
+                    @if($nextStatus)
+                    <button onclick="updateStatus({{ $order->id }}, '{{ $nextStatus }}')"
+                            class="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200">
+                        → {{ $statuses[$nextStatus] }}
+                    </button>
+                    @endif
+                    @if($order->status === 'shipping')
+                    <button onclick="updateStatus({{ $order->id }}, 'failed')"
+                            class="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200">
+                        → Giao thất bại
+                    </button>
                     @endif
                 </div>
-                
-                <!-- Quick Status Update -->
-                <div class="mt-4 pt-4 border-t flex flex-wrap items-center justify-between gap-4">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm text-gray-500">Chuyển:</span>
-                        @php
-                            $statusFlow = [
-                                'new' => 'preparing',
-                                'preparing' => 'ordered',
-                                'ordered' => 'shipping',
-                                'shipping' => 'delivered',
-                            ];
-                            $nextStatus = $statusFlow[$order->status] ?? null;
-                        @endphp
-                        @if($nextStatus)
-                        <button onclick="updateStatus({{ $order->id }}, '{{ $nextStatus }}')"
-                                class="px-3 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200">
-                            → {{ $statuses[$nextStatus] }}
+                <div class="flex space-x-2">
+                    <a href="{{ route('orders.show', $order) }}" 
+                       class="px-3 py-1 text-sm text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                    <a href="{{ route('orders.edit', $order) }}" 
+                       class="px-3 py-1 text-sm text-indigo-600 hover:text-indigo-900">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form action="{{ route('orders.destroy', $order) }}" method="POST" class="inline"
+                          onsubmit="return confirm('Bạn có chắc muốn xóa đơn hàng này?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="px-3 py-1 text-sm text-red-600 hover:text-red-900">
+                            <i class="fas fa-trash"></i>
                         </button>
-                        @endif
-                        @if($order->status === 'shipping')
-                        <button onclick="updateStatus({{ $order->id }}, 'failed')"
-                                class="px-3 py-1 text-xs bg-red-100 text-red-800 rounded-full hover:bg-red-200">
-                            → Giao thất bại
-                        </button>
-                        @endif
-                    </div>
-                    <div class="flex space-x-2">
-                        <a href="{{ route('orders.show', $order) }}" 
-                           class="px-3 py-1 text-sm text-gray-600 hover:text-gray-900">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                        <a href="{{ route('orders.edit', $order) }}" 
-                           class="px-3 py-1 text-sm text-indigo-600 hover:text-indigo-900">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <form action="{{ route('orders.destroy', $order) }}" method="POST" class="inline"
-                              onsubmit="return confirm('Bạn có chắc muốn xóa đơn hàng này?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="px-3 py-1 text-sm text-red-600 hover:text-red-900">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
-        @empty
-        <div class="bg-white rounded-lg shadow p-12 text-center text-gray-500">
-            <i class="fas fa-shopping-cart text-4xl mb-4 text-gray-300"></i>
-            <p>Chưa có đơn hàng nào</p>
-            <a href="{{ route('orders.create') }}" class="mt-4 inline-block text-indigo-600 hover:text-indigo-800">
-                Tạo đơn hàng đầu tiên →
-            </a>
-        </div>
-        @endforelse
     </div>
+    @empty
+    <div class="bg-white rounded-lg shadow p-12 text-center text-gray-500">
+        <i class="fas fa-shopping-cart text-4xl mb-4 text-gray-300"></i>
+        <p>Chưa có đơn hàng nào</p>
+        <a href="{{ route('orders.create') }}" class="mt-4 inline-block text-indigo-600 hover:text-indigo-800">
+            Tạo đơn hàng đầu tiên →
+        </a>
+    </div>
+    @endforelse
 </div>
 
 @if($orders->hasPages())
@@ -251,57 +256,79 @@
 
 @push('scripts')
 <script>
-
 $(document).ready(function() {
+    // Chosen select
     $('.chosen-select').chosen({
         width: '100%',
         no_results_text: 'Không tìm thấy sản phẩm!'
     });
+
+    var $selectAll = $('#select-all-checkbox');
+    var $orderCheckboxes = $('.order-checkbox');
+    var $bulkControls = $('#bulk-status-controls');
+    var $selectedCount = $('#selected-count');
+    var $bulkStatusSelect = $('#bulk-status-select');
+    var $bulkApplyBtn = $('#bulk-apply-btn');
+
+    // Cập nhật UI khi checkbox thay đổi
+    function updateBulkUI() {
+        var checkedCount = $orderCheckboxes.filter(':checked').length;
+        var totalCount = $orderCheckboxes.length;
+
+        $selectedCount.text(checkedCount);
+        $bulkControls.toggle(checkedCount > 0);
+        $selectAll.prop('checked', checkedCount === totalCount && totalCount > 0);
+    }
+
+    // Chọn tất cả
+    $selectAll.on('change', function() {
+        $orderCheckboxes.prop('checked', this.checked);
+        updateBulkUI();
+    });
+
+    // Từng checkbox đơn hàng
+    $orderCheckboxes.on('change', function() {
+        updateBulkUI();
+    });
+
+    // Enable/disable nút Áp dụng
+    $bulkStatusSelect.on('change', function() {
+        $bulkApplyBtn.prop('disabled', !$(this).val());
+    });
+
+    // Áp dụng chuyển trạng thái hàng loạt
+    $bulkApplyBtn.on('click', function() {
+        var status = $bulkStatusSelect.val();
+        var orderIds = $orderCheckboxes.filter(':checked').map(function() {
+            return $(this).val();
+        }).get();
+
+        if (!status || orderIds.length === 0) return;
+
+        $.ajax({
+            url: '/orders/bulk-status',
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+            contentType: 'application/json',
+            data: JSON.stringify({ order_ids: orderIds, status: status }),
+            success: function(data) {
+                if (data.success) location.reload();
+            }
+        });
+    });
 });
 
 function updateStatus(orderId, status) {
-    fetch(`/orders/${orderId}/status`, {
+    $.ajax({
+        url: '/orders/' + orderId + '/status',
         method: 'PATCH',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ status })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            location.reload();
+        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
+        contentType: 'application/json',
+        data: JSON.stringify({ status: status }),
+        success: function(data) {
+            if (data.success) location.reload();
         }
     });
-}
-
-function bulkActions() {
-    return {
-        selectedOrders: [],
-        bulkStatus: '',
-        updateBulkStatus() {
-            if (!this.bulkStatus || this.selectedOrders.length === 0) return;
-            
-            fetch('/orders/bulk-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({
-                    order_ids: this.selectedOrders,
-                    status: this.bulkStatus
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    location.reload();
-                }
-            });
-        }
-    }
 }
 </script>
 @endpush

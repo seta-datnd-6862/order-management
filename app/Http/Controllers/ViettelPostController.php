@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\ViettelOrder;
+use App\Services\ViettelPostTracker;
 use App\Services\ViettelPostService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,6 +102,9 @@ class ViettelPostController extends Controller
                     ->with('error', 'Mã vận chuyển không khớp với mã trong đơn hàng')
                     ->withInput();
             }
+
+            $trackingClass = new ViettelPostTracker();
+            dd($trackingClass->track($request->tracking_number));
 
             $viettelData = $this->viettelService->getOrderByTrackingNumber($request->tracking_number);
 

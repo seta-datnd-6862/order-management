@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Exports\ProductsExport;
+use App\Imports\ProductsImport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ProductController extends Controller
 {
@@ -118,5 +121,40 @@ class ProductController extends Controller
         
         return redirect()->route('products.index')
             ->with('success', 'Xóa sản phẩm thành công!');
+    }
+
+    public function export()
+    {
+        $filename = 'san-pham-' . now()->format('d-m-Y') . '.xlsx';
+        return Excel::download(new ProductsExport, $filename);
+    }
+
+    public function importView()
+    {
+        return view('products.import');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls|max:10240',
+        ], [
+            'file.required' => 'Vui lòng chọn file Excel',
+            'file.mimes'    => 'File phải có định dạng .xlsx hoặc .xls',
+            'file.max'      => 'File không được vượt quá 10MB',
+        ]);
+
+        $import = new ProductsImport();
+        Excel::import($import, $request->file('file'));
+
+        $message = "Import thành công: {$import->importedCount} sản phẩm mới, {$import->updatedCount} sản phẩm cập nhật.";
+
+        if (!empty($import->errors)) {
+            return redirect()->route('products.index')
+                ->with('success', $message)
+                ->with('import_errors', $import->errors);
+        }
+
+        return redirect()->route('products.index')->with('success', $message);
     }
 }

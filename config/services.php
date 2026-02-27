@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    // config/services.php - Thêm phần này vào mảng config
+    'viettelpost' => [
+        'token'     => env('VIETTELPOST_TOKEN', ''),
+        'cache_ttl' => env('VIETTELPOST_CACHE_TTL', 15),
+        'timeout'   => env('VIETTELPOST_TIMEOUT', 15),
+    ],
+
+    // .env
+    // VIETTELPOST_TOKEN=your_token_here
+    // VIETTELPOST_CACHE_TTL=15
+    // VIETTELPOST_TIMEOUT=15
+
 ];
