@@ -4,12 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CustomerController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Customer::query();
+        $query = Customer::where('user_id', Auth::id());
         
         if ($request->filled('search')) {
             $search = $request->search;
@@ -40,7 +41,7 @@ class CustomerController extends Controller
             'address' => 'nullable|string',
         ]);
 
-        Customer::create($validated);
+        Customer::create(array_merge($validated, ['user_id' => Auth::id()]));
 
         return redirect()->route('customers.index')
             ->with('success', 'Thêm khách hàng thành công!');

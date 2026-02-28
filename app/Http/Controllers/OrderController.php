@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\InventoryImportItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
@@ -16,7 +17,8 @@ class OrderController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Order::with(['customer', 'items.product']);
+        $query = Order::with(['customer', 'items.product'])
+            ->where('user_id', Auth::id());
 
         // Filter by search (customer name)
         if ($request->filled('search')) {
@@ -69,8 +71,8 @@ class OrderController extends Controller
         }
 
         $statuses = Order::getStatuses();
-        $customers = Customer::orderBy('name')->get();
-        $products = Product::orderBy('name')->get();
+        $customers = Customer::where('user_id', Auth::id())->orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
 
         return view('orders.index', compact('orders', 'statuses', 'customers', 'products'));
     }
@@ -121,10 +123,10 @@ class OrderController extends Controller
 
     public function create()
     {
-        $customers = Customer::orderBy('name')->get();
-        $products = Product::orderBy('name')->get();
+        $customers = Customer::where('user_id', Auth::id())->orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
         $sizes = OrderItem::getSizes();
-        
+
         return view('orders.create', compact('customers', 'products', 'sizes'));
     }
 
@@ -162,6 +164,7 @@ class OrderController extends Controller
 
             // Tạo đơn hàng
             $order = Order::create([
+                'user_id' => Auth::id(),
                 'customer_id' => $validated['customer_id'],
                 'status' => Order::STATUS_NEW,
                 'total_amount' => $totalAmount,
@@ -256,11 +259,11 @@ class OrderController extends Controller
     public function edit(Order $order)
     {
         $order->load(['customer', 'items.product']);
-        $customers = Customer::orderBy('name')->get();
-        $products = Product::orderBy('name')->get();
+        $customers = Customer::where('user_id', Auth::id())->orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
         $sizes = OrderItem::getSizes();
         $statuses = Order::getStatuses();
-        
+
         return view('orders.edit', compact('order', 'customers', 'products', 'sizes', 'statuses'));
     }
 
@@ -444,6 +447,7 @@ class OrderController extends Controller
         ]);
 
         Order::whereIn('id', $validated['order_ids'])
+            ->where('user_id', Auth::id())
             ->update(['status' => $validated['status']]);
 
         return response()->json([

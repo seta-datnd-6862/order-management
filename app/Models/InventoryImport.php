@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class InventoryImport extends Model
 {
     protected $fillable = [
+        'user_id',
         'import_code',
         'supplier',
         'import_date',
@@ -43,6 +44,11 @@ class InventoryImport extends Model
         }
         
         return 'IMP' . $date . $newNumber;
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
     }
 
     public function items()

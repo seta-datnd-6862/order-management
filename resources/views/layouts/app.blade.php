@@ -119,12 +119,27 @@
                         </a>
                     </div>
                 </div>
+
+                <!-- User info + Logout (desktop) -->
+                <div class="hidden md:flex items-center space-x-3">
+                    <span class="text-sm text-gray-600">
+                        <i class="fas fa-user-circle mr-1 text-indigo-400"></i>
+                        {{ Auth::user()->name }}
+                    </span>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                                class="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition">
+                            <i class="fas fa-sign-out-alt mr-1"></i> Đăng xuất
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
-        
+
         <!-- Mobile menu -->
         <div class="md:hidden border-t">
-            <div class="grid grid-cols-6 py-2">
+            <div class="grid grid-cols-7 py-2">
                 <a href="{{ route('orders.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('orders.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-shopping-cart text-lg"></i>
                     <span class="text-xs mt-1">Đơn hàng</span>
@@ -150,6 +165,14 @@
                     <i class="fas fa-box text-lg"></i>
                     <span class="text-xs mt-1">SP</span>
                 </a>
+                <!-- Logout mobile -->
+                <form method="POST" action="{{ route('logout') }}" class="flex flex-col items-center">
+                    @csrf
+                    <button type="submit" class="flex flex-col items-center px-2 py-2 text-gray-600 hover:text-red-600">
+                        <i class="fas fa-sign-out-alt text-lg"></i>
+                        <span class="text-xs mt-1">Thoát</span>
+                    </button>
+                </form>
             </div>
         </div>
     </nav>
@@ -406,5 +429,9 @@
     </script>
 
     @stack('scripts')
+
+    @auth
+    @include('components.chatbot')
+    @endauth
 </body>
 </html>

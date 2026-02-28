@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Exports\ProductsExport;
 use App\Imports\ProductsImport;
@@ -13,7 +14,7 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::query();
+        $query = Product::where('user_id', Auth::id());
         
         if ($request->filled('search')) {
             $query->where('name', 'like', "%{$request->search}%");
@@ -62,7 +63,7 @@ class ProductController extends Controller
         
         unset($validated['image_base64']);
 
-        Product::create($validated);
+        Product::create(array_merge($validated, ['user_id' => Auth::id()]));
 
         return redirect()->route('products.index')
             ->with('success', 'Thêm sản phẩm thành công!');

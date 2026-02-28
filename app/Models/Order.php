@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ViettelOrder;
+use App\Models\User;
 
 class Order extends Model
 {
     protected $fillable = [
+        'user_id',
         'customer_id',
         'status',
         'total_amount',
@@ -57,6 +59,11 @@ class Order extends Model
             self::STATUS_DELIVERED => 'bg-green-100 text-green-800',
             self::STATUS_FAILED => 'bg-red-100 text-red-800',
         ];
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function customer()

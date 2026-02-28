@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class InventoryExport extends Model
 {
     protected $fillable = [
+        'user_id',
         'export_code',
         'reason',
         'export_date',
@@ -58,6 +59,11 @@ class InventoryExport extends Model
         }
         
         return 'EXP' . $date . $newNumber;
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
     }
 
     public function items()

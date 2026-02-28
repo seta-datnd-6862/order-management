@@ -8,13 +8,14 @@ use App\Models\InventoryImportItem;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class InventoryController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::query();
+        $query = Product::where('user_id', Auth::id());
 
         // Filter by product
         if ($request->filled('product_id')) {
@@ -84,7 +85,7 @@ class InventoryController extends Controller
             }
         }
 
-        $allProducts = Product::orderBy('name')->get();
+        $allProducts = Product::where('user_id', Auth::id())->orderBy('name')->get();
 
         return view('inventory.index', compact('inventory', 'allProducts'));
     }

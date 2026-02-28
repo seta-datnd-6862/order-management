@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Customer extends Model
 {
     protected $fillable = [
+        'user_id',
         'name',
         'phone',
         'facebook_link',
@@ -14,6 +15,11 @@ class Customer extends Model
         'note',
         'address',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class);
+    }
 
     public function orders()
     {

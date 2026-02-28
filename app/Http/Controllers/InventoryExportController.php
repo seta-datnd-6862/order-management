@@ -6,13 +6,14 @@ use App\Models\InventoryExport;
 use App\Models\InventoryExportItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class InventoryExportController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InventoryExport::with(['items.product']);
+        $query = InventoryExport::with(['items.product'])->where('user_id', Auth::id());
 
         // Filter by export code
         if ($request->filled('export_code')) {
@@ -41,14 +42,14 @@ class InventoryExportController extends Controller
 
         $exports = $query->latest('export_date')->paginate(20);
         $reasons = InventoryExport::getReasons();
-        $products = Product::orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
 
         return view('inventory.exports.index', compact('exports', 'reasons', 'products'));
     }
 
     public function create()
     {
-        $products = Product::orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
         $reasons = InventoryExport::getReasons();
         $sizes = InventoryExportItem::getSizes();
         $exportCode = InventoryExport::generateExportCode();
@@ -73,6 +74,7 @@ class InventoryExportController extends Controller
         DB::beginTransaction();
         try {
             $export = InventoryExport::create([
+                'user_id' => Auth::id(),
                 'export_code' => $validated['export_code'],
                 'reason' => $validated['reason'],
                 'export_date' => $validated['export_date'],
@@ -107,7 +109,7 @@ class InventoryExportController extends Controller
     public function edit(InventoryExport $export)
     {
         $export->load(['items.product']);
-        $products = Product::orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
         $reasons = InventoryExport::getReasons();
         $sizes = InventoryExportItem::getSizes();
 

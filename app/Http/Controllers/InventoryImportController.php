@@ -6,13 +6,14 @@ use App\Models\InventoryImport;
 use App\Models\InventoryImportItem;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class InventoryImportController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InventoryImport::with(['items.product']);
+        $query = InventoryImport::with(['items.product'])->where('user_id', Auth::id());
 
         // Filter by import code
         if ($request->filled('import_code')) {
@@ -41,14 +42,14 @@ class InventoryImportController extends Controller
 
         $imports = $query->latest('import_date')->paginate(20);
         $suppliers = InventoryImport::getSuppliers();
-        $products = Product::orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
 
         return view('inventory.imports.index', compact('imports', 'suppliers', 'products'));
     }
 
     public function create()
     {
-        $products = Product::orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
         $suppliers = InventoryImport::getSuppliers();
         $sizes = InventoryImportItem::getSizes();
 
@@ -74,6 +75,7 @@ class InventoryImportController extends Controller
         DB::beginTransaction();
         try {
             $import = InventoryImport::create([
+                'user_id' => Auth::id(),
                 'import_code' => $validated['import_code'],
                 'supplier' => $validated['supplier'],
                 'import_date' => $validated['import_date'],
@@ -111,7 +113,7 @@ class InventoryImportController extends Controller
     public function edit(InventoryImport $import)
     {
         $import->load(['items.product']);
-        $products = Product::orderBy('name')->get();
+        $products = Product::where('user_id', Auth::id())->orderBy('name')->get();
         $suppliers = InventoryImport::getSuppliers();
         $sizes = InventoryImportItem::getSizes();
 

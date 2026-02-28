@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class SummaryController extends Controller
@@ -15,7 +16,7 @@ class SummaryController extends Controller
         $fromDate = $request->get('from_date');
         $toDate = $request->get('to_date');
 
-        $query = Order::query();
+        $query = Order::where('user_id', Auth::id());
         
         if ($status) {
             $query->where('status', $status);
@@ -112,7 +113,7 @@ class SummaryController extends Controller
 
         $nextStatus = $statusFlow[$currentStatus];
 
-        $query = Order::where('status', $currentStatus);
+        $query = Order::where('user_id', Auth::id())->where('status', $currentStatus);
         
         if ($fromDate) {
             $query->whereDate('created_at', '>=', $fromDate);
