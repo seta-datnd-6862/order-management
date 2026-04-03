@@ -114,14 +114,46 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        $product->delete();
+
+        return redirect()->route('products.index')
+            ->with('success', 'Xóa sản phẩm thành công!');
+    }
+
+    public function forceDelete($id)
+    {
+        $product = Product::withTrashed()->where('user_id', Auth::id())->findOrFail($id);
+
         if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }
-        
-        $product->delete();
-        
-        return redirect()->route('products.index')
-            ->with('success', 'Xóa sản phẩm thành công!');
+
+        $product->forceDelete();
+
+        return redirect()->route('products.trashed')
+            ->with('success', 'Đã xóa vĩnh viễn sản phẩm!');
+    }
+
+    public function restore($id)
+    {
+        $product = Product::withTrashed()->where('user_id', Auth::id())->findOrFail($id);
+        $product->restore();
+
+        return redirect()->route('products.trashed')
+            ->with('success', 'Đã khôi phục sản phẩm!');
+    }
+
+    public function trashed(Request $request)
+    {
+        $query = Product::onlyTrashed()->where('user_id', Auth::id());
+
+        if ($request->filled('search')) {
+            $query->where('name', 'like', "%{$request->search}%");
+        }
+
+        $products = $query->orderBy('deleted_at', 'desc')->paginate(20);
+
+        return view('products.trashed', compact('products'));
     }
 
     public function export()

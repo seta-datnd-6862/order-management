@@ -37,6 +37,9 @@ Route::middleware('auth')->group(function () {
     Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
     Route::get('products/import', [ProductController::class, 'importView'])->name('products.import');
     Route::post('products/import', [ProductController::class, 'import'])->name('products.import.store');
+    Route::get('products/trashed', [ProductController::class, 'trashed'])->name('products.trashed');
+    Route::patch('products/{id}/restore', [ProductController::class, 'restore'])->name('products.restore');
+    Route::delete('products/{id}/force-delete', [ProductController::class, 'forceDelete'])->name('products.forceDelete');
     Route::resource('products', ProductController::class)->except(['show']);
 
     // Đơn hàng
