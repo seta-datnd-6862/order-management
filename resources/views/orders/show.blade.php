@@ -31,11 +31,18 @@
             </div>
         </div>
         <div class="flex space-x-2">
+            {{-- Split Order Button --}}
+            <button onclick="openSplitModal()" 
+                    class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+                    {{ $order->items->count() < 2 ? 'disabled' : '' }}
+                    title="{{ $order->items->count() < 2 ? 'Cần ít nhất 2 sản phẩm để tách đơn' : 'Tách đơn hàng' }}">
+                <i class="fas fa-code-branch mr-1"></i>Tách đơn
+            </button>
             <a href="{{ route('orders.edit', $order) }}" 
                class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                 <i class="fas fa-edit mr-1"></i>Sửa
             </a>
-            {{-- NEW: Viettel Post Button --}}
+            {{-- Viettel Post Button --}}
             @if($order->hasViettelOrder())
                 <a href="{{ route('viettel-posts.show', $order->viettelOrder) }}" 
                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
@@ -436,6 +443,251 @@
     </div>
 </div>
 
+{{-- ==================== SPLIT ORDER MODAL ==================== --}}
+<div x-data="splitOrderModal()" x-cloak>
+    <!-- Backdrop -->
+    <div x-show="open" 
+         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black bg-opacity-50 z-40"
+         @click="open = false">
+    </div>
+
+    <!-- Modal -->
+    <div x-show="open"
+         x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-4"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden" @click.away="open = false">
+            
+            <!-- Modal Header -->
+            <div class="bg-purple-600 px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center text-white">
+                    <i class="fas fa-code-branch text-xl mr-3"></i>
+                    <div>
+                        <h2 class="text-lg font-bold">Tách đơn hàng #{{ $order->id }}</h2>
+                        <p class="text-purple-200 text-sm">Chọn sản phẩm để tạo đơn mới</p>
+                    </div>
+                </div>
+                <button @click="open = false" class="text-white hover:text-purple-200 transition">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="overflow-y-auto" style="max-height: calc(90vh - 180px);">
+                <div class="p-6 space-y-6">
+
+                    <!-- Step 1: Select Items -->
+                    <div>
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <span class="w-6 h-6 bg-purple-600 text-white rounded-full text-xs flex items-center justify-center mr-2">1</span>
+                            Chọn sản phẩm chuyển sang đơn mới
+                        </h3>
+                        <p class="text-sm text-gray-500 mb-4">Chọn ít nhất 1 sản phẩm. Có thể điều chỉnh số lượng tách.</p>
+
+                        <div class="space-y-3">
+                            <template x-for="(item, index) in items" :key="item.id">
+                                <div class="border rounded-lg p-4 transition"
+                                     :class="item.selected ? 'border-purple-400 bg-purple-50' : 'border-gray-200 hover:border-gray-300'">
+                                    <div class="flex items-center space-x-4">
+                                        <!-- Checkbox -->
+                                        <label class="flex-shrink-0 cursor-pointer">
+                                            <input type="checkbox" x-model="item.selected" class="w-5 h-5 text-purple-600 rounded border-gray-300 focus:ring-purple-500">
+                                        </label>
+
+                                        <!-- Image -->
+                                        <div class="w-14 h-14 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                            <template x-if="item.image_url">
+                                                <img :src="item.image_url" class="w-full h-full object-cover">
+                                            </template>
+                                            <template x-if="!item.image_url">
+                                                <div class="w-full h-full flex items-center justify-center">
+                                                    <i class="fas fa-image text-gray-400"></i>
+                                                </div>
+                                            </template>
+                                        </div>
+
+                                        <!-- Info -->
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-semibold text-gray-800 truncate" x-text="item.product_name"></p>
+                                            <div class="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                                                <span>Size: <span x-text="item.size" class="font-medium text-gray-700"></span></span>
+                                                <span>Giá: <span x-text="formatCurrency(item.price)" class="font-medium text-gray-700"></span></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Quantity Selector -->
+                                        <div class="flex-shrink-0" x-show="item.selected">
+                                            <label class="text-xs text-gray-500 block mb-1 text-center">SL tách</label>
+                                            <div class="flex items-center border rounded-lg overflow-hidden">
+                                                <button type="button" @click="decreaseQty(index)" 
+                                                        class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 transition"
+                                                        :disabled="item.split_quantity <= 1">
+                                                    <i class="fas fa-minus text-xs"></i>
+                                                </button>
+                                                <input type="number" x-model.number="item.split_quantity" 
+                                                       :max="item.max_quantity" min="1"
+                                                       @input="clampQty(index)"
+                                                       class="w-12 text-center border-x py-1 text-sm focus:outline-none">
+                                                <button type="button" @click="increaseQty(index)" 
+                                                        class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 transition"
+                                                        :disabled="item.split_quantity >= item.max_quantity">
+                                                    <i class="fas fa-plus text-xs"></i>
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-gray-400 text-center mt-1">
+                                                / <span x-text="item.max_quantity"></span> hiện có
+                                            </p>
+                                        </div>
+
+                                        <!-- Subtotal -->
+                                        <div class="flex-shrink-0 text-right w-28" x-show="item.selected">
+                                            <p class="text-xs text-gray-500">Thành tiền</p>
+                                            <p class="font-semibold text-purple-600" x-text="formatCurrency(item.price * item.split_quantity)"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: New Order Details -->
+                    <div class="border-t pt-6">
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <span class="w-6 h-6 bg-purple-600 text-white rounded-full text-xs flex items-center justify-center mr-2">2</span>
+                            Thông tin đơn mới
+                        </h3>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Status -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Trạng thái</label>
+                                <select x-model="newOrder.status" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                    @foreach(\App\Models\Order::getStatuses() as $key => $label)
+                                    <option value="{{ $key }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Deposit -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tiền cọc đơn mới</label>
+                                <input type="number" x-model.number="newOrder.deposit_amount" min="0"
+                                       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+
+                            <!-- Discount -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Giảm giá đơn mới</label>
+                                <input type="number" x-model.number="newOrder.discount_amount" min="0"
+                                       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                       placeholder="0">
+                            </div>
+
+                            <!-- Note -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Ghi chú</label>
+                                <input type="text" x-model="newOrder.note"
+                                       class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                       placeholder="Ghi chú cho đơn mới...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Preview -->
+                    <div class="border-t pt-6" x-show="selectedItems().length > 0">
+                        <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                            <span class="w-6 h-6 bg-purple-600 text-white rounded-full text-xs flex items-center justify-center mr-2">3</span>
+                            Xem trước kết quả
+                        </h3>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <!-- Original Order After Split -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h4 class="font-semibold text-blue-800 text-sm mb-3">
+                                    <i class="fas fa-file-alt mr-1"></i>Đơn gốc #{{ $order->id }} (sau tách)
+                                </h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Số SP còn lại:</span>
+                                        <span class="font-medium" x-text="remainingItemsCount()"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tổng tiền:</span>
+                                        <span class="font-semibold text-blue-600" x-text="formatCurrency(remainingTotal())"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- New Order Preview -->
+                            <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                                <h4 class="font-semibold text-purple-800 text-sm mb-3">
+                                    <i class="fas fa-file-medical mr-1"></i>Đơn mới (sẽ tạo)
+                                </h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Số SP:</span>
+                                        <span class="font-medium" x-text="selectedItems().length"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Tổng tiền:</span>
+                                        <span class="font-semibold text-purple-600" x-text="formatCurrency(splitTotal())"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Đã cọc:</span>
+                                        <span class="font-medium text-green-600" x-text="formatCurrency(newOrder.deposit_amount)"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">Giảm giá:</span>
+                                        <span class="font-medium text-yellow-600" x-text="formatCurrency(newOrder.discount_amount)"></span>
+                                    </div>
+                                    <div class="flex justify-between border-t pt-2 mt-2">
+                                        <span class="text-gray-600">Còn thanh toán:</span>
+                                        <span class="font-bold text-orange-600" x-text="formatCurrency(newOrderRemaining())"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Warning if original becomes empty -->
+                        <div class="mt-3 bg-yellow-50 border border-yellow-300 rounded-lg p-3 flex items-start"
+                             x-show="willOriginalBeEmpty()">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 mr-2 mt-0.5"></i>
+                            <p class="text-sm text-yellow-800">
+                                Lưu ý: Tất cả sản phẩm sẽ được chuyển sang đơn mới. Đơn gốc sẽ không còn sản phẩm nào.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t">
+                <p class="text-sm text-gray-500">
+                    Đã chọn <span class="font-semibold text-purple-600" x-text="selectedItems().length"></span> sản phẩm
+                    · Tổng: <span class="font-semibold text-purple-600" x-text="formatCurrency(splitTotal())"></span>
+                </p>
+                <div class="flex space-x-3">
+                    <button @click="open = false" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                        Hủy
+                    </button>
+                    <button @click="submitSplit()" 
+                            :disabled="selectedItems().length === 0 || submitting"
+                            :class="selectedItems().length === 0 || submitting ? 'bg-gray-300 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'"
+                            class="px-6 py-2 text-white rounded-lg transition flex items-center">
+                        <i class="fas fa-code-branch mr-2"></i>
+                        <span x-text="submitting ? 'Đang xử lý...' : 'Xác nhận tách đơn'"></span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
 function updateStatus(status) {
@@ -457,16 +709,180 @@ function updateStatus(status) {
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        // Show toast notification
         const toast = document.createElement('div');
         toast.className = 'fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
         toast.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Đã copy!';
         document.body.appendChild(toast);
-        
-        setTimeout(() => {
-            toast.remove();
-        }, 2000);
+        setTimeout(() => { toast.remove(); }, 2000);
     });
+}
+
+// ==================== SPLIT ORDER LOGIC ====================
+<?php
+    $itemsJson = $order->items->map(function ($item) {
+        return [
+            'id' => $item->id,
+            'product_id' => $item->product_id,
+            'product_name' => $item->product->name,
+            'size' => $item->size,
+            'quantity' => $item->quantity,
+            'price' => $item->price,
+            'note' => $item->note,
+            'image_url' => $item->image_url,
+        ];
+    });
+?>
+
+const orderItemsData = @json($itemsJson);
+
+function openSplitModal() {
+    window.dispatchEvent(new CustomEvent('open-split-modal'));
+}
+
+function splitOrderModal() {
+    return {
+        open: false,
+        submitting: false,
+        items: [],
+        newOrder: {
+            status: '{{ $order->status }}',
+            deposit_amount: 0,
+            discount_amount: 0,
+            note: '',
+        },
+
+        init() {
+            this.items = orderItemsData.map(item => ({
+                ...item,
+                selected: false,
+                split_quantity: item.quantity,
+                max_quantity: item.quantity,
+            }));
+
+            window.addEventListener('open-split-modal', () => {
+                // Reset state on each open
+                this.items = orderItemsData.map(item => ({
+                    ...item,
+                    selected: false,
+                    split_quantity: item.quantity,
+                    max_quantity: item.quantity,
+                }));
+                this.newOrder = {
+                    status: '{{ $order->status }}',
+                    deposit_amount: 0,
+                    discount_amount: 0,
+                    note: '',
+                };
+                this.submitting = false;
+                this.open = true;
+            });
+        },
+
+        selectedItems() {
+            return this.items.filter(i => i.selected);
+        },
+
+        decreaseQty(index) {
+            if (this.items[index].split_quantity > 1) {
+                this.items[index].split_quantity--;
+            }
+        },
+
+        increaseQty(index) {
+            if (this.items[index].split_quantity < this.items[index].max_quantity) {
+                this.items[index].split_quantity++;
+            }
+        },
+
+        clampQty(index) {
+            let item = this.items[index];
+            if (item.split_quantity < 1) item.split_quantity = 1;
+            if (item.split_quantity > item.max_quantity) item.split_quantity = item.max_quantity;
+        },
+
+        splitTotal() {
+            return this.selectedItems().reduce((sum, item) => sum + (item.price * item.split_quantity), 0);
+        },
+
+        remainingTotal() {
+            let total = {{ $order->total_amount }};
+            return total - this.splitTotal();
+        },
+
+        remainingItemsCount() {
+            let totalItems = {{ $order->items->count() }};
+            let fullyMoved = this.selectedItems().filter(i => i.split_quantity === i.max_quantity).length;
+            return totalItems - fullyMoved;
+        },
+
+        willOriginalBeEmpty() {
+            return this.items.every(item => item.selected && item.split_quantity === item.max_quantity);
+        },
+
+        newOrderRemaining() {
+            let total = this.splitTotal();
+            let remaining = total - this.newOrder.deposit_amount - this.newOrder.discount_amount;
+            return Math.max(0, remaining);
+        },
+
+        formatCurrency(value) {
+            if (!value && value !== 0) return '0đ';
+            return new Intl.NumberFormat('vi-VN').format(value) + 'đ';
+        },
+
+        submitSplit() {
+            if (this.selectedItems().length === 0) return;
+            
+            if (!confirm('Bạn có chắc chắn muốn tách đơn hàng? Hành động này không thể hoàn tác.')) {
+                return;
+            }
+
+            this.submitting = true;
+
+            const payload = {
+                items: this.selectedItems().map(item => ({
+                    order_item_id: item.id,
+                    quantity: item.split_quantity,
+                })),
+                status: this.newOrder.status,
+                deposit_amount: this.newOrder.deposit_amount || 0,
+                discount_amount: this.newOrder.discount_amount || 0,
+                note: this.newOrder.note || '',
+            };
+
+            fetch('{{ route("orders.split", $order) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(payload),
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success & redirect to new order
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed top-20 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+                    toast.innerHTML = '<i class="fas fa-check-circle mr-2"></i>' + data.message;
+                    document.body.appendChild(toast);
+
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1000);
+                } else {
+                    alert(data.message || 'Có lỗi xảy ra');
+                    this.submitting = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Có lỗi xảy ra. Vui lòng thử lại.');
+                this.submitting = false;
+            });
+        }
+    };
 }
 </script>
 @endpush

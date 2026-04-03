@@ -455,4 +455,111 @@ class OrderController extends Controller
             'message' => 'Cập nhật ' . count($validated['order_ids']) . ' đơn hàng thành công!',
         ]);
     }
+
+    public function split(Request $request, Order $order)
+    {
+        $request->validate([
+            'items'                => 'required|array|min:1',
+            'items.*.order_item_id' => 'required|exists:order_items,id',
+            'items.*.quantity'     => 'required|integer|min:1',
+            'status'               => 'required|in:' . implode(',', array_keys(Order::getStatuses())),
+            'deposit_amount'       => 'nullable|numeric|min:0',
+            'discount_amount'      => 'nullable|numeric|min:0',
+            'note'                 => 'nullable|string|max:1000',
+        ]);
+
+        // Validate all items belong to this order and quantities are valid
+        $splitItems = [];
+        foreach ($request->items as $itemData) {
+            $orderItem = $order->items()->find($itemData['order_item_id']);
+
+            if (!$orderItem) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sản phẩm không thuộc đơn hàng này.',
+                ], 422);
+            }
+
+            if ($itemData['quantity'] > $orderItem->quantity) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Số lượng tách của \"{$orderItem->product->name}\" vượt quá số lượng hiện có ({$orderItem->quantity}).",
+                ], 422);
+            }
+
+            $splitItems[] = [
+                'order_item'    => $orderItem,
+                'split_quantity' => (int) $itemData['quantity'],
+            ];
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // 1. Create new order with same customer
+            $newOrder = Order::create([
+                'user_id'         => Auth::id(),
+                'customer_id'     => $order->customer_id,
+                'status'          => $request->status,
+                'deposit_amount'  => $request->deposit_amount ?? 0,
+                'discount_amount' => $request->discount_amount ?? 0,
+                'note'            => $request->note ?? '',
+                'total_amount'    => 0, // Will be calculated below
+            ]);
+
+            $newTotalAmount = 0;
+
+            // 2. Process each item
+            foreach ($splitItems as $data) {
+                $originalItem = $data['order_item'];
+                $splitQty     = $data['split_quantity'];
+
+                // Create item in new order (copy image path, don't move the file)
+                $newOrder->items()->create([
+                    'product_id' => $originalItem->product_id,
+                    'size'       => $originalItem->size,
+                    'quantity'   => $splitQty,
+                    'price'      => $originalItem->price,
+                    'note'       => $originalItem->note,
+                    'image'      => $originalItem->image, // Share same image path
+                ]);
+
+                $newTotalAmount += $originalItem->price * $splitQty;
+
+                // Update or delete original item
+                if ($splitQty >= $originalItem->quantity) {
+                    // Full quantity moved → delete original item (keep image file since new order references it)
+                    $originalItem->delete();
+                } else {
+                    // Partial quantity → reduce original
+                    $originalItem->update([
+                        'quantity' => $originalItem->quantity - $splitQty,
+                    ]);
+                }
+            }
+
+            // 3. Update totals
+            $newOrder->update(['total_amount' => $newTotalAmount]);
+
+            // Recalculate original order total
+            $originalNewTotal = $order->items()->sum(DB::raw('price * quantity'));
+            $order->update(['total_amount' => $originalNewTotal]);
+
+            DB::commit();
+
+            return response()->json([
+                'success'      => true,
+                'message'      => "Đã tách thành công sang đơn hàng #{$newOrder->id}",
+                'new_order_id' => $newOrder->id,
+                'redirect_url' => route('orders.show', $newOrder),
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Có lỗi xảy ra: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

@@ -43,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('orders', OrderController::class);
     Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::post('orders/bulk-status', [OrderController::class, 'bulkUpdateStatus'])->name('orders.bulkUpdateStatus');
+    Route::post('/orders/{order}/split', [OrderController::class, 'split'])->name('orders.split');
 
     // Tổng hợp
     Route::get('summary', [SummaryController::class, 'index'])->name('summary.index');
