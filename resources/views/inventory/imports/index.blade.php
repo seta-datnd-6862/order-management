@@ -88,11 +88,11 @@
             <div class="mt-4 flex flex-wrap gap-2">
                 @foreach($import->items->take(4) as $item)
                 <div class="flex items-center bg-gray-50 rounded-lg p-2 text-sm">
-                    @if($item->product->image_url)
+                    @if($item->product?->image_url)
                     <img src="{{ $item->product->image_url }}" class="w-10 h-10 object-cover rounded mr-2">
                     @endif
                     <div>
-                        <p class="font-medium">{{ Str::limit($item->product->name, 20) }}</p>
+                        <p class="font-medium">{{ Str::limit($item->product?->name, 20) }}</p>
                         <p class="text-xs text-gray-500">{{ $item->size }} × {{ $item->quantity }}</p>
                     </div>
                 </div>

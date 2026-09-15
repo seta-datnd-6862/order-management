@@ -29,7 +29,9 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Khách hàng <span class="text-red-500">*</span>
                             </label>
-                            <select name="customer_id" required class="chosen-select">
+                            <select name="customer_id" required class="ts-select"
+                                    data-placeholder="-- Chọn khách hàng --"
+                                    data-no-results="Không tìm thấy khách hàng">
                                 <option value="">-- Chọn khách hàng --</option>
                                 @foreach($customers as $customer)
                                 <option value="{{ $customer->id }}" {{ old('customer_id', $order->customer_id) == $customer->id ? 'selected' : '' }}>
@@ -265,9 +267,11 @@ function addItem(existingData = null) {
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Sản phẩm <span class="text-red-500">*</span>
                     </label>
-                    <select name="items[${index}][product_id]" 
-                            class="product-select chosen-select" 
+                    <select name="items[${index}][product_id]"
+                            class="product-select ts-select"
                             data-index="${index}"
+                            data-placeholder="-- Chọn sản phẩm --"
+                            data-no-results="Không tìm thấy sản phẩm"
                             required>
                         <option value="">-- Chọn sản phẩm --</option>
                         ${productsData.map(p => `<option value="${p.id}" data-price="${p.price}" data-image="${p.image}" ${existingData && existingData.product_id == p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
@@ -354,8 +358,8 @@ function addItem(existingData = null) {
     
     $('#itemsContainer').append(itemHtml);
     
-    // Initialize Chosen for new select
-    initChosenForItem(index);
+    // Khởi tạo select nâng cao cho dòng mới
+    initProductSelect(index);
     
     // Bind events
     bindItemEvents(index);
@@ -367,18 +371,13 @@ function addItem(existingData = null) {
     calculateTotals();
 }
 
-function initChosenForItem(index) {
+function initProductSelect(index) {
     const $select = $(`.product-select[data-index="${index}"]`);
-    
+
     if ($select.length) {
-        $select.chosen({
-            placeholder_text_single: 'Chọn sản phẩm',
-            no_results_text: 'Không tìm thấy',
-            width: '100%',
-            search_contains: true
-        });
-        
-        // Bind change event for Chosen
+        $select.tsSelect();
+
+        // Tom Select bắn event 'change' gốc trên thẻ select nên jQuery vẫn bắt được
         $select.on('change', function() {
             onProductChange(index);
         });
@@ -411,12 +410,15 @@ function bindItemEvents(index) {
 
 function onProductChange(index) {
     const $select = $(`.product-select[data-index="${index}"]`);
-    const $option = $select.find('option:selected');
-    
-    if ($option.val()) {
-        const price = $option.data('price') || 0;
-        const image = $option.data('image') || '';
-        
+    const productId = $select.val();
+
+    if (productId) {
+        // Tra dữ liệu từ productsData thay vì đọc data-* trên <option>,
+        // vì Tom Select tự quản lý các thẻ option của select gốc
+        const product = productsData.find(p => p.id == productId) || {};
+        const price = product.price || 0;
+        const image = product.image || '';
+
         // Chỉ update price nếu là item mới (không có ID)
         const hasExistingId = itemIndexMap[index];
         if (!hasExistingId) {
@@ -449,12 +451,9 @@ function onImageChange(index, event) {
 }
 
 function removeItem(index) {
-    // Destroy Chosen
-    const $select = $(`.product-select[data-index="${index}"]`);
-    if ($select.data('chosen')) {
-        $select.chosen('destroy');
-    }
-    
+    // Huỷ Tom Select trước khi xoá dòng để không rò rỉ DOM/event
+    $(`.product-select[data-index="${index}"]`).tsDestroy();
+
     // Remove item
     $(`.item-row[data-index="${index}"]`).remove();
     

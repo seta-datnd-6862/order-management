@@ -63,7 +63,7 @@
             <div class="space-y-4">
                 @foreach($import->items as $item)
                 <div class="flex items-center bg-gray-50 rounded-lg p-4">
-                    @if($item->product->image_url)
+                    @if($item->product?->image_url)
                     <img src="{{ $item->product->image_url }}" 
                          class="w-16 h-16 object-cover rounded mr-4">
                     @else
@@ -73,7 +73,7 @@
                     @endif
                     
                     <div class="flex-1">
-                        <h4 class="font-medium">{{ $item->product->name }}</h4>
+                        <h4 class="font-medium">{{ $item->product?->name }}</h4>
                         <div class="flex items-center space-x-4 mt-1 text-sm text-gray-600">
                             <span><i class="fas fa-ruler mr-1"></i>Size: {{ $item->size }}</span>
                             <span><i class="fas fa-cubes mr-1"></i>SL: {{ $item->quantity }}</span>

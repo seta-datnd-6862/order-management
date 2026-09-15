@@ -187,7 +187,7 @@ function addItem() {
         '</div>' +
         '<div class="mb-3">' +
             '<label class="block text-sm text-gray-600 mb-1">Sản phẩm <span class="text-red-500">*</span></label>' +
-            '<select name="items[' + itemIndex + '][product_id]" class="product-select chosen-select w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" required>' +
+            '<select name="items[' + itemIndex + '][product_id]" class="product-select ts-select w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500" data-placeholder="-- Chọn sản phẩm --" data-no-results="Không tìm thấy sản phẩm" required>' +
                 '<option value="">-- Chọn sản phẩm --</option>' +
                 '<?php echo $productsHtml; ?>' +
             '</select>' +
@@ -217,12 +217,9 @@ function addItem() {
     itemIndex++;
     updateItemNumbers();
     updateTotals();
-    // device is not ipad
-    
-    if (!isMobileDevice()) {
-        $('.chosen-select').chosen({ width: '100%' });
-    }
 
+    // Khởi tạo select nâng cao cho dòng vừa thêm (tsSelect tự bỏ qua dòng đã khởi tạo)
+    $('.ts-select').tsSelect();
 }
 
 // Add size to a product item
@@ -279,7 +276,9 @@ $(document).on('click', '.remove-size-btn', function() {
 // Remove item
 $(document).on('click', '.remove-item', function() {
     if ($('.item-row').length > 1) {
-        $(this).closest('.item-row').remove();
+        var $row = $(this).closest('.item-row');
+        $row.find('.ts-select').tsDestroy();   // huỷ Tom Select trước khi bỏ dòng
+        $row.remove();
         updateItemNumbers();
         updateTotals();
     } else {

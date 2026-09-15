@@ -8,10 +8,65 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="{{ asset('components/chosen.css') }}"
-        rel="stylesheet">
+    <link href="{{ asset('components/tom-select.css') }}" rel="stylesheet">
     <style>
         [x-cloak] { display: none !important; }
+
+        /* ===== Tom Select: đồng bộ giao diện với Tailwind + tối ưu cho mobile ===== */
+        .ts-wrapper { width: 100%; }
+
+        .ts-wrapper.single .ts-control,
+        .ts-wrapper.multi .ts-control {
+            border: 1px solid #d1d5db;      /* gray-300 */
+            border-radius: 0.5rem;          /* rounded-lg */
+            padding: 0.5rem 0.75rem;        /* py-2 px-3 */
+            background: #fff;
+            box-shadow: none;
+            min-height: 42px;
+        }
+
+        .ts-wrapper.single .ts-control { padding-right: 2rem; }
+
+        .ts-wrapper.focus .ts-control {
+            border-color: #6366f1;                          /* indigo-500 */
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);  /* focus:ring-2 */
+        }
+
+        .ts-wrapper.disabled .ts-control { background: #f3f4f6; }
+
+        .ts-control .item { color: #111827; }
+        .ts-control input::placeholder { color: #9ca3af; }
+
+        .ts-dropdown {
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, .1), 0 4px 6px -4px rgba(0, 0, 0, .1);
+            margin-top: 0.25rem;
+            z-index: 60;    /* trên navbar sticky z-50 */
+        }
+
+        .ts-dropdown .option { padding: 0.5rem 0.75rem; }
+        .ts-dropdown .active { background-color: #eef2ff; color: #4338ca; }
+        .ts-dropdown .no-results { padding: 0.5rem 0.75rem; color: #6b7280; }
+
+        /* Ô tìm kiếm nằm trong dropdown (plugin dropdown_input) */
+        .ts-dropdown .dropdown-input {
+            border: 0;
+            border-bottom: 1px solid #e5e7eb;
+            padding: 0.625rem 0.75rem;
+        }
+
+        /* Trên mobile: font >= 16px để iOS không tự zoom khi focus ô tìm kiếm */
+        @media (max-width: 768px) {
+            .ts-control,
+            .ts-control input,
+            .ts-dropdown,
+            .ts-dropdown .dropdown-input {
+                font-size: 16px;
+            }
+            .ts-dropdown .option { padding: 0.75rem; }  /* vùng chạm lớn hơn */
+            .ts-dropdown .ts-dropdown-content { max-height: 45vh; }
+        }
         
         /* Image hover effect */
         .image-zoom-container {
@@ -234,7 +289,63 @@
     </main>
 
     <script src="{{ asset('js/lib/jquery.min.js') }}"></script>
-    <script src="{{ asset('components/chosen.js') }}"></script>
+    <script src="{{ asset('components/tom-select.complete.min.js') }}"></script>
+
+    <!-- Select nâng cao (Tom Select) - thay cho Chosen, hoạt động được trên mobile -->
+    <script>
+        (function ($) {
+            // Tuỳ chọn mặc định dùng chung cho mọi select trong app
+            function buildOptions(el, overrides) {
+                var $el = $(el);
+
+                return $.extend({
+                    create: false,
+                    allowEmptyOption: true,     // giữ option rỗng để bỏ chọn / xoá filter
+                    maxOptions: null,           // hiện toàn bộ danh sách, không cắt ở 50
+                    plugins: ['dropdown_input'],// ô tìm kiếm nằm trong dropdown - dễ dùng trên mobile
+                    placeholder: $el.data('placeholder') || '-- Chọn --',
+                    render: {
+                        no_results: function () {
+                            var text = $el.data('no-results') || 'Không tìm thấy kết quả';
+                            return '<div class="no-results">' + text + '</div>';
+                        }
+                    }
+                }, overrides || {});
+            }
+
+            // Tom Select copy class của select gốc sang thẻ wrapper, nên sau khi khởi tạo
+            // $('.ts-select') sẽ khớp cả <select> lẫn <div.ts-wrapper>. Luôn lọc lại để chỉ
+            // thao tác trên form control, nếu không lần gọi thứ hai sẽ tạo instance hỏng trên div.
+            function controls($set) {
+                return $set.filter('select, input');
+            }
+
+            // Khởi tạo Tom Select, bỏ qua phần tử đã khởi tạo rồi
+            $.fn.tsSelect = function (options) {
+                controls(this).each(function () {
+                    if (this.tomselect) return;
+                    new TomSelect(this, buildOptions(this, options));
+                });
+                return this;
+            };
+
+            // Huỷ Tom Select, trả select về trạng thái gốc
+            $.fn.tsDestroy = function () {
+                controls(this).each(function () {
+                    if (this.tomselect) this.tomselect.destroy();
+                });
+                return this;
+            };
+
+            // Đồng bộ lại danh sách option khi giá trị select bị đổi bằng .val() từ JS
+            $.fn.tsSync = function () {
+                controls(this).each(function () {
+                    if (this.tomselect) this.tomselect.sync();
+                });
+                return this;
+            };
+        })(jQuery);
+    </script>
 
     <!-- Image Viewer Script -->
     <script>
@@ -403,28 +514,9 @@
             });
         }
 
-        function isMobileDevice() {
-            // 1. Check userAgent
-            const mobileKeywords = /Android|webOS|iPhone|iPad|iPod|Linux|BlackBerry|IEMobile|Opera Mini/i;
-
-            if (mobileKeywords.test(navigator.userAgent)) {
-                return true;
-            }
-            
-            // 2. Check touch + screen size (cho tablet mode trên desktop)
-            const hasTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-            const isSmallScreen = window.innerWidth <= 768;
-            
-            return hasTouch && isSmallScreen;
-        }
-
+        // Tự động nâng cấp mọi select có class .ts-select (kể cả trên mobile)
         $(document).ready(function() {
-            $('.chosen-select').chosen({
-                width: '100%',
-                no_results_text: 'Không tìm thấy kết quả',
-                placeholder_text_single: '-- Chọn --',
-                allow_single_deselect: true
-            });
+            $('.ts-select').tsSelect();
         });
     </script>
 

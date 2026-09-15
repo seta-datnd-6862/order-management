@@ -1,0 +1,74 @@
+name: order-management
+
+services:
+  app:
+    build:
+      context: .
+      target: app
+    image: order-management-app:latest
+    container_name: om-app
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      RUN_MIGRATIONS: "true"
+    volumes:
+      - om-storage:/var/www/html/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  nginx:
+    build:
+      context: .
+      target: web
+    image: order-management-nginx:latest
+    container_name: om-nginx
+    restart: unless-stopped
+    # Chỉ loopback — Nginx của host proxy vào đây (giống zootopbear).
+    ports:
+      - "127.0.0.1:8090:80"
+    volumes:
+      - om-storage:/var/www/html/storage:ro
+    depends_on: [app]
+
+  scheduler:
+    # Phải có build: dù dùng chung image với `app`. Thiếu nó, `compose up --build`
+    # coi đây là image ngoài và đi pull trên Docker Hub -> "pull access denied".
+    # Trùng tag nên compose chỉ build một lần.
+    build:
+      context: .
+      target: app
+    image: order-management-app:latest
+    container_name: om-scheduler
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      RUN_MIGRATIONS: "false"
+    volumes:
+      - om-storage:/var/www/html/storage
+    # routes/console.php: db:backup chạy 02:00 hằng ngày
+    command: ["php", "artisan", "schedule:work"]
+    depends_on: [app]
+
+  mysql:
+    image: mysql:8.0
+    container_name: om-mysql
+    restart: unless-stopped
+    # KHÔNG publish port: chỉ container trong network này truy cập được.
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - om-mysql:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  om-storage:
+  om-mysql:

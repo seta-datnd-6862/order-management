@@ -1,0 +1,25 @@
+.git
+.github
+node_modules
+vendor
+public/build
+public/hot
+public/storage
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/backups/*
+# Cache này sinh ra trên máy dev (có devDependencies). Image build --no-dev
+# nên manifest cũ sẽ trỏ tới class không tồn tại, ví dụ Laravel\Pail.
+bootstrap/cache/*.php
+.env
+.env.*
+!.env.production.example
+tests
+.phpunit.cache
+.phpunit.result.cache
+.DS_Store
+docker-compose.yml
+Dockerfile
+railway-setup-final.sh

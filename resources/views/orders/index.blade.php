@@ -39,7 +39,9 @@
             @endforeach
         </select>
         
-        <select name="product_id" class="chosen-select px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500">
+        <select name="product_id" class="ts-select px-4 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500"
+                data-placeholder="-- Tất cả sản phẩm --"
+                data-no-results="Không tìm thấy sản phẩm!">
             <option value="">-- Tất cả sản phẩm --</option>
             @foreach($products as $product)
             <option value="{{ $product->id }}" {{ request('product_id') == $product->id ? 'selected' : '' }}>
@@ -257,11 +259,7 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Chosen select
-    $('.chosen-select').chosen({
-        width: '100%',
-        no_results_text: 'Không tìm thấy sản phẩm!'
-    });
+    // Select sản phẩm đã được layout tự khởi tạo qua class .ts-select
 
     var $selectAll = $('#select-all-checkbox');
     var $orderCheckboxes = $('.order-checkbox');
