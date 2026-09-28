@@ -290,7 +290,7 @@
         <!-- Right Column -->
         <div class="lg:col-span-1 space-y-6">
             <!-- Order Summary -->
-            <div class="bg-white rounded-lg shadow p-6 sticky top-24">
+            <div class="bg-white rounded-lg shadow p-6">
                 <h2 class="text-lg font-semibold mb-4 flex items-center">
                     <i class="fas fa-receipt mr-2 text-indigo-600"></i>Tóm tắt đơn hàng
                 </h2>
@@ -369,6 +369,84 @@
                 </div>
             </div>
             
+            <!-- Chi tiết đơn hàng: mô tả bên trái, số tiền căn phải thành một cột -->
+            @php
+                $itemRows = [];
+
+                foreach ($order->items as $item) {
+                    $itemRows[] = [
+                        'name' => $item->product?->name ?? '(sản phẩm đã xoá)',
+                        'meta' => 'size ' . $item->size . ' · ×' . $item->quantity
+                            // Nhiều hơn 1 cái thì ghi thêm đơn giá để đối chiếu với thành tiền.
+                            . ($item->quantity > 1 ? ' · ' . number_format($item->price) . 'đ/cái' : ''),
+                        'amount' => $item->price * $item->quantity,
+                    ];
+                }
+
+                $summaryRows = [
+                    ['Tổng tiền hàng', $order->total_amount],
+                    ['Tiền cọc', $order->deposit_amount],
+                    ['Giảm giá', $order->discount_amount],
+                    ['Còn phải thanh toán', $order->remaining_amount],
+                ];
+
+                // Bản text phẳng cho nút Copy. Không đệm khoảng trắng: dán sang Zalo/
+                // Facebook là font co giãn nên có đệm cũng không thẳng cột được.
+                $detailLines = [];
+
+                foreach ($itemRows as $row) {
+                    $detailLines[] = $row['name'] . ' (' . $row['meta'] . '): ' . number_format($row['amount']) . 'đ';
+                }
+
+                $detailLines[] = '';
+
+                foreach ($summaryRows as [$label, $amount]) {
+                    $detailLines[] = $label . ': ' . number_format($amount) . 'đ';
+                }
+
+                $orderDetailText = implode("\n", $detailLines);
+            @endphp
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-semibold flex items-center">
+                        <i class="fas fa-file-alt mr-2 text-indigo-600"></i>Chi tiết đơn hàng
+                    </h3>
+                    <button type="button" id="copyOrderDetailBtn"
+                            class="inline-flex items-center px-3 py-1.5 text-sm border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50">
+                        <i class="fas fa-copy mr-1"></i><span id="copyOrderDetailLabel">Copy</span>
+                    </button>
+                </div>
+
+                <div class="bg-gray-50 border rounded-lg p-3 text-sm">
+                    @foreach($itemRows as $row)
+                    <div class="flex items-start justify-between gap-3 py-1">
+                        <span class="min-w-0 break-words text-gray-700">
+                            {{ $row['name'] }}
+                            <span class="text-xs text-gray-500">({{ $row['meta'] }})</span>
+                        </span>
+                        <span class="shrink-0 font-medium tabular-nums text-gray-800">
+                            {{ number_format($row['amount']) }}đ
+                        </span>
+                    </div>
+                    @endforeach
+
+                    <div class="border-t my-2"></div>
+
+                    @foreach($summaryRows as $index => [$label, $amount])
+                    @php $isLast = $index === count($summaryRows) - 1; @endphp
+                    <div class="flex items-start justify-between gap-3 py-1 {{ $isLast ? 'border-t pt-2 mt-1' : '' }}">
+                        <span class="{{ $isLast ? 'font-semibold text-gray-800' : 'text-gray-600' }}">{{ $label }}</span>
+                        <span class="shrink-0 tabular-nums {{ $isLast ? 'font-bold text-orange-600' : 'font-medium text-gray-800' }}">
+                            {{ number_format($amount) }}đ
+                        </span>
+                    </div>
+                    @endforeach
+                </div>
+
+                <textarea id="orderDetailText" class="hidden" readonly aria-hidden="true">{{ $orderDetailText }}</textarea>
+            </div>
+
             <!-- Quick Status Update -->
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="font-semibold mb-3 flex items-center">
@@ -690,6 +768,37 @@
 
 @push('scripts')
 <script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btn = document.getElementById('copyOrderDetailBtn');
+    const label = document.getElementById('copyOrderDetailLabel');
+    const source = document.getElementById('orderDetailText');
+
+    if (!btn || !source) {
+        return;
+    }
+
+    btn.addEventListener('click', async function () {
+        const text = source.value;
+
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (e) {
+            // navigator.clipboard không dùng được trên http hoặc trình duyệt cũ
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        }
+
+        label.textContent = 'Đã copy!';
+        setTimeout(() => label.textContent = 'Copy', 2000);
+    });
+});
+
 function updateStatus(status) {
     fetch('{{ route("orders.updateStatus", $order) }}', {
         method: 'PATCH',
