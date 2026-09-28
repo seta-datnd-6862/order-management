@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderCampaignController;
 use App\Http\Controllers\SummaryController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\InventoryImportController;
@@ -47,6 +48,21 @@ Route::middleware('auth')->group(function () {
     Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.updateStatus');
     Route::post('orders/bulk-status', [OrderController::class, 'bulkUpdateStatus'])->name('orders.bulkUpdateStatus');
     Route::post('/orders/{order}/split', [OrderController::class, 'split'])->name('orders.split');
+
+    // Thêm hàng loạt đơn hàng (đợt nhập từ take note)
+    Route::prefix('campaigns')->name('campaigns.')->group(function () {
+        Route::get('/', [OrderCampaignController::class, 'index'])->name('index');
+        Route::get('/create', [OrderCampaignController::class, 'create'])->name('create');
+        Route::post('/preview', [OrderCampaignController::class, 'preview'])->name('preview');
+        Route::post('/', [OrderCampaignController::class, 'store'])->name('store');
+        Route::get('/{campaign}', [OrderCampaignController::class, 'show'])->name('show');
+        Route::delete('/{campaign}', [OrderCampaignController::class, 'destroy'])->name('destroy');
+        Route::post('/{campaign}/rematch', [OrderCampaignController::class, 'rematch'])->name('rematch');
+        Route::get('/{campaign}/start', [OrderCampaignController::class, 'start'])->name('start');
+        Route::get('/{campaign}/orders/{campaignOrder}', [OrderCampaignController::class, 'process'])->name('process');
+        Route::put('/{campaign}/orders/{campaignOrder}', [OrderCampaignController::class, 'update'])->name('orders.update');
+        Route::post('/{campaign}/orders/{campaignOrder}/reopen', [OrderCampaignController::class, 'reopen'])->name('orders.reopen');
+    });
 
     // Tổng hợp
     Route::get('summary', [SummaryController::class, 'index'])->name('summary.index');

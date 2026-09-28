@@ -126,6 +126,10 @@
                            class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('orders.*') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
                             <i class="fas fa-shopping-cart mr-1"></i> Đơn hàng
                         </a>
+                        <a href="{{ route('campaigns.index') }}" 
+                           class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('campaigns.*') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
+                            <i class="fas fa-layer-group mr-1"></i> Thêm hàng loạt
+                        </a>
                         <a href="{{ route('summary.index') }}" 
                            class="px-3 py-2 rounded-md text-sm font-medium {{ request()->routeIs('summary.*') ? 'bg-indigo-100 text-indigo-700' : 'text-gray-600 hover:bg-gray-100' }}">
                             <i class="fas fa-chart-bar mr-1"></i> Tổng hợp
@@ -194,38 +198,43 @@
 
         <!-- Mobile menu -->
         <div class="md:hidden border-t">
-            <div class="grid grid-cols-7 py-2">
-                <a href="{{ route('orders.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('orders.*') ? 'text-indigo-600' : 'text-gray-600' }}">
+            <div class="grid grid-cols-8 py-2">
+                <a href="{{ route('orders.index') }}" class="flex flex-col items-center px-1 py-2 {{ request()->routeIs('orders.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-shopping-cart text-lg"></i>
-                    <span class="text-xs mt-1">Đơn hàng</span>
+                    <span class="text-[10px] leading-tight mt-1 text-center">Đơn hàng</span>
                 </a>
-                <a href="{{ route('summary.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('summary.*') ? 'text-indigo-600' : 'text-gray-600' }}">
+                <a href="{{ route('summary.index') }}" class="flex flex-col items-center px-1 py-2 {{ request()->routeIs('summary.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-chart-bar text-lg"></i>
-                    <span class="text-xs mt-1">Tổng hợp</span>
+                    <span class="text-[10px] leading-tight mt-1 text-center">Tổng hợp</span>
                 </a>
-                <a href="{{ route('inventory.imports.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('inventory.*') ? 'text-indigo-600' : 'text-gray-600' }}">
+                <a href="{{ route('campaigns.index') }}" class="flex flex-col items-center px-1 py-2 {{ request()->routeIs('campaigns.*') ? 'text-indigo-600' : 'text-gray-600' }}">
+                    <i class="fas fa-layer-group text-lg"></i>
+                    <span class="text-[10px] leading-tight mt-1 text-center">Nhập lô</span>
+                </a>
+
+                <a href="{{ route('inventory.imports.index') }}" class="flex flex-col items-center px-1 py-2 {{ request()->routeIs('inventory.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-warehouse text-lg"></i>
-                    <span class="text-xs mt-1">Kho</span>
+                    <span class="text-[10px] leading-tight mt-1 text-center">Kho</span>
                 </a>
                 <!-- NEW: Viettel Post Mobile Menu -->
-                <a href="{{ route('viettel-posts.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('viettel-posts.*') ? 'text-green-600' : 'text-gray-600' }}">
+                <a href="{{ route('viettel-posts.index') }}" class="flex flex-col items-center px-1 py-2 {{ request()->routeIs('viettel-posts.*') ? 'text-green-600' : 'text-gray-600' }}">
                     <i class="fas fa-truck text-lg"></i>
-                    <span class="text-xs mt-1">Viettel</span>
+                    <span class="text-[10px] leading-tight mt-1 text-center">Viettel</span>
                 </a>
-                <a href="{{ route('customers.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('customers.*') ? 'text-indigo-600' : 'text-gray-600' }}">
+                <a href="{{ route('customers.index') }}" class="flex flex-col items-center px-1 py-2 {{ request()->routeIs('customers.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-users text-lg"></i>
-                    <span class="text-xs mt-1">Khách</span>
+                    <span class="text-[10px] leading-tight mt-1 text-center">Khách</span>
                 </a>
-                <a href="{{ route('products.index') }}" class="flex flex-col items-center px-2 py-2 {{ request()->routeIs('products.*') ? 'text-indigo-600' : 'text-gray-600' }}">
+                <a href="{{ route('products.index') }}" class="flex flex-col items-center px-1 py-2 {{ request()->routeIs('products.*') ? 'text-indigo-600' : 'text-gray-600' }}">
                     <i class="fas fa-box text-lg"></i>
-                    <span class="text-xs mt-1">SP</span>
+                    <span class="text-[10px] leading-tight mt-1 text-center">SP</span>
                 </a>
                 <!-- Logout mobile -->
                 <form method="POST" action="{{ route('logout') }}" class="flex flex-col items-center">
                     @csrf
-                    <button type="submit" class="flex flex-col items-center px-2 py-2 text-gray-600 hover:text-red-600">
+                    <button type="submit" class="flex flex-col items-center px-1 py-2 text-gray-600 hover:text-red-600">
                         <i class="fas fa-sign-out-alt text-lg"></i>
-                        <span class="text-xs mt-1">Thoát</span>
+                        <span class="text-[10px] leading-tight mt-1 text-center">Thoát</span>
                     </button>
                 </form>
             </div>

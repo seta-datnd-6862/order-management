@@ -104,6 +104,7 @@ class ChatbotController extends Controller
                 'name' => $product->name,
                 'default_price' => $product->default_price,
                 'product_code' => $product->product_code,
+                'image_url' => $product->image_url,
             ],
         ]);
     }

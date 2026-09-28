@@ -7,10 +7,16 @@
     <h1 class="text-2xl font-bold text-gray-800 mb-4 sm:mb-0">
         <i class="fas fa-shopping-cart mr-2 text-indigo-600"></i>Đơn hàng
     </h1>
-    <a href="{{ route('orders.create') }}" 
-       class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-        <i class="fas fa-plus mr-2"></i>Tạo đơn hàng
-    </a>
+    <div class="flex gap-2">
+        <a href="{{ route('campaigns.index') }}" 
+           class="inline-flex items-center px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition">
+            <i class="fas fa-layer-group mr-2"></i>Thêm hàng loạt
+        </a>
+        <a href="{{ route('orders.create') }}" 
+           class="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+            <i class="fas fa-plus mr-2"></i>Tạo đơn hàng
+        </a>
+    </div>
 </div>
 
 <!-- Filters -->
