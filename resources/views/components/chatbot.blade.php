@@ -165,7 +165,8 @@
 </div>
 
 <script>
-const CHATBOT_SIZES = ['20','21','22','23','24','25','26','27','28','XS','S','M','L','XL','XXL','XXXL','66','73','80','90','100','110','120','130','140','150','160','170','180'];
+// Lấy thẳng từ model để không lệch với danh sách size của hệ thống
+const CHATBOT_SIZES = @json(\App\Models\OrderItem::getSizes());
 const CHATBOT_CSRF = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
 function chatbot() {

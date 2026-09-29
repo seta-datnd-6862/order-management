@@ -60,7 +60,7 @@ class OrderCampaignTest extends TestCase
                     'items' => [
                         [
                             'product_name' => 'Áo chưa từng nhập',
-                            'size' => '32',
+                            'size' => '44',
                             'quantity' => 1,
                         ],
                     ],
@@ -107,7 +107,7 @@ class OrderCampaignTest extends TestCase
         $this->assertNull($second->customer_id);
         $secondItem = $second->items()->firstOrFail();
         $this->assertNull($secondItem->product_id);
-        $this->assertSame('32', $secondItem->size_raw);
+        $this->assertSame('44', $secondItem->size_raw);
         $this->assertNull($secondItem->size);
         $this->assertFalse($second->is_ready);
         $this->assertNotEmpty($campaign->import_warnings);

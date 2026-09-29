@@ -103,7 +103,12 @@ class EntityMatcherTest extends TestCase
         $this->assertSame('90', $this->matcher->normalizeSize(' size 90 '));
         $this->assertSame('XXL', $this->matcher->normalizeSize('2xl'));
         $this->assertSame('L', $this->matcher->normalizeSize('l'));
-        $this->assertNull($this->matcher->normalizeSize('32'));
+        // Size giày nằm trong khoảng 20-43
+        $this->assertSame('32', $this->matcher->normalizeSize('32'));
+        $this->assertSame('43', $this->matcher->normalizeSize('size 43'));
+        // Ngoài khoảng thì để trống cho người dùng chọn lại
+        $this->assertNull($this->matcher->normalizeSize('44'));
+        $this->assertNull($this->matcher->normalizeSize('FREE'));
         $this->assertNull($this->matcher->normalizeSize(''));
         $this->assertNull($this->matcher->normalizeSize(null));
     }
