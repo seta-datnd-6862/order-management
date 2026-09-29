@@ -442,13 +442,21 @@
                         <span class="text-gray-500">Tổng số lượng:</span>
                         <span class="font-medium" id="totalQuantity">0</span>
                     </div>
-                    <div class="border-t pt-2 flex justify-between text-base">
-                        <span class="font-semibold">Tổng tiền:</span>
-                        <span class="font-bold text-indigo-600" id="totalAmount">0đ</span>
+                    <div class="border-t pt-2 flex justify-between">
+                        <span class="text-gray-500">Tổng tiền hàng:</span>
+                        <span class="font-medium tabular-nums text-gray-800" id="totalAmount">0đ</span>
                     </div>
-                    <div class="flex justify-between text-xs text-gray-500">
-                        <span>Còn lại sau cọc/giảm:</span>
-                        <span id="remainingAmount">0đ</span>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Tiền cọc:</span>
+                        <span class="font-medium tabular-nums text-green-700" id="summaryDeposit">0đ</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-500">Giảm giá:</span>
+                        <span class="font-medium tabular-nums text-yellow-700" id="summaryDiscount">0đ</span>
+                    </div>
+                    <div class="border-t pt-2 flex justify-between text-base">
+                        <span class="font-semibold">Còn phải thanh toán:</span>
+                        <span class="font-bold tabular-nums text-orange-600" id="remainingAmount">0đ</span>
                     </div>
                 </div>
 
@@ -559,7 +567,7 @@ function addItem() {
             <input type="hidden" name="items[${index}][product_name_raw]" value="Dòng thêm tay">
 
             <div class="flex items-start justify-between gap-2 mb-3">
-                <p class="text-xs text-gray-500">Dòng thêm tay</p>
+                <p class="text-xs text-gray-500 manual-row-label">Dòng thêm tay</p>
                 <button type="button" class="remove-item-btn text-red-500 hover:text-red-700 shrink-0" title="Xoá dòng">
                     <i class="fas fa-times"></i>
                 </button>
@@ -579,6 +587,49 @@ function addItem() {
                                 <option value="">-- Chọn sản phẩm --</option>
                                 ${productsData.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('')}
                             </select>
+                        </div>
+                    </div>
+
+                    <button type="button" class="toggle-new-product mt-2 text-xs text-indigo-600 hover:text-indigo-800"
+                            data-index="${index}">
+                        <i class="fas fa-plus-circle mr-1"></i>Tạo sản phẩm mới từ dòng này
+                    </button>
+
+                    <div class="new-product-panel hidden mt-2 bg-indigo-50 border border-indigo-100 rounded-lg p-3 space-y-3"
+                         data-index="${index}">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Tên sản phẩm <span class="text-red-500">*</span></label>
+                                <input type="text" class="new-product-name w-full px-3 py-2 border rounded-lg text-sm"
+                                       placeholder="Nhập tên sản phẩm...">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Giá mặc định</label>
+                                <input type="number" min="0" step="1000" value="0"
+                                       class="new-product-price w-full px-3 py-2 border rounded-lg text-sm">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Ảnh (không bắt buộc)</label>
+                            <div class="flex items-center gap-3">
+                                <div class="new-product-image-preview w-16 h-16 shrink-0 bg-white border rounded-lg overflow-hidden flex items-center justify-center">
+                                    <i class="fas fa-image text-xl text-gray-300"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <input type="file" accept="image/*" class="new-product-image w-full px-3 py-2 border rounded-lg text-sm bg-white">
+                                    <button type="button" class="clear-new-product-image hidden mt-1 text-xs text-red-500 hover:text-red-700">
+                                        <i class="fas fa-times mr-1"></i>Bỏ ảnh
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button type="button" class="save-new-product px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm"
+                                    data-index="${index}">
+                                <i class="fas fa-save mr-1"></i>Lưu & chọn
+                            </button>
+                            <button type="button" class="cancel-new-product px-4 py-2 border rounded-lg text-sm hover:bg-white"
+                                    data-index="${index}">Hủy</button>
                         </div>
                     </div>
                 </div>
@@ -789,6 +840,15 @@ function saveNewProduct(index, $btn) {
             // Ảnh vừa resize dùng luôn làm thumbnail, khỏi phải chờ tải lại trang.
             addProductOption(res.product, res.product.image_url || imageBase64 || null);
             setSelectValue($row.find('.product-select'), res.product.id);
+
+            // Dòng thêm tay chưa có tên thật trong note, lấy luôn tên sản phẩm vừa tạo.
+            // Dòng đọc từ note thì giữ nguyên để còn đối chiếu lại được.
+            const $rawName = $row.find('input[name$="[product_name_raw]"]');
+            if ($rawName.val() === 'Dòng thêm tay') {
+                $rawName.val(res.product.name);
+                $row.find('.manual-row-label').text(res.product.name);
+            }
+
             $panel.addClass('hidden');
             $panel.find('.new-product-image').val('');
             previewNewProductImage($row, null);
@@ -873,7 +933,16 @@ function calculateTotals() {
     $('#totalItems').text(totalItems);
     $('#totalQuantity').text(totalQuantity);
     $('#totalAmount').text(formatCurrency(totalAmount));
-    $('#remainingAmount').text(formatCurrency(totalAmount - deposit - discount));
+    $('#summaryDeposit').text(formatCurrency(deposit));
+    $('#summaryDiscount').text(formatCurrency(discount));
+
+    const remaining = totalAmount - deposit - discount;
+
+    $('#remainingAmount')
+        .text(formatCurrency(remaining))
+        // Cọc + giảm vượt quá tổng tiền hàng thì gần như chắc chắn nhập nhầm.
+        .toggleClass('text-orange-600', remaining >= 0)
+        .toggleClass('text-red-600', remaining < 0);
 }
 
 function formatCurrency(value) {

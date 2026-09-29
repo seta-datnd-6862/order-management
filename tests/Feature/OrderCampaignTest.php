@@ -316,6 +316,50 @@ class OrderCampaignTest extends TestCase
         $this->assertNotNull($response->json('product.image_url'));
     }
 
+    public function test_tong_ket_hien_ro_tien_coc_va_giam_gia(): void
+    {
+        $this->actingAs($this->user)->post(route('campaigns.store'), ['raw_json' => $this->payloadJson()]);
+
+        $campaign = OrderCampaign::firstOrFail();
+        $draft = $campaign->campaignOrders()->where('sequence', 1)->firstOrFail();
+
+        $this->actingAs($this->user)
+            ->get(route('campaigns.process', [$campaign, $draft]))
+            ->assertOk()
+            ->assertSee('Tổng tiền hàng:', false)
+            ->assertSee('id="summaryDeposit"', false)
+            ->assertSee('Tiền cọc:', false)
+            ->assertSee('id="summaryDiscount"', false)
+            ->assertSee('Giảm giá:', false)
+            ->assertSee('Còn phải thanh toán:', false)
+            // Nhãn cũ gộp chung cọc và giảm giá, dễ gây nhầm
+            ->assertDontSee('Còn lại sau cọc/giảm', false);
+    }
+
+    public function test_dong_them_tay_cung_tao_duoc_san_pham_moi(): void
+    {
+        $this->actingAs($this->user)->post(route('campaigns.store'), ['raw_json' => $this->payloadJson()]);
+
+        $campaign = OrderCampaign::firstOrFail();
+        $draft = $campaign->campaignOrders()->where('sequence', 1)->firstOrFail();
+
+        $html = $this->actingAs($this->user)
+            ->get(route('campaigns.process', [$campaign, $draft]))
+            ->assertOk()
+            ->getContent();
+
+        // Template dòng thêm tay nằm trong hàm addItem() phải có đủ panel tạo sản phẩm
+        $start = strpos($html, 'function addItem()');
+        $this->assertNotFalse($start, 'Không tìm thấy hàm addItem()');
+
+        $addItemJs = substr($html, $start, (int) strpos($html, 'function removeItem(') - $start);
+
+        foreach (['toggle-new-product', 'new-product-panel', 'new-product-name', 'new-product-price',
+                  'new-product-image', 'new-product-image-preview', 'save-new-product', 'cancel-new-product'] as $needle) {
+            $this->assertStringContainsString($needle, $addItemJs, "Dòng thêm tay thiếu \"{$needle}\"");
+        }
+    }
+
     public function test_bo_qua_roi_mo_lai_don_nhap(): void
     {
         $this->actingAs($this->user)->post(route('campaigns.store'), ['raw_json' => $this->payloadJson()]);
