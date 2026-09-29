@@ -348,6 +348,13 @@ class OrderCampaignTest extends TestCase
             ->assertOk()
             ->getContent();
 
+        // Nút "Thêm dòng" phải nằm SAU danh sách, để dòng mới hiện ngay phía trên nút
+        $this->assertGreaterThan(
+            strpos($html, 'id="itemsContainer"'),
+            strpos($html, 'id="addItemBtn"'),
+            'Nút Thêm dòng phải nằm dưới danh sách sản phẩm',
+        );
+
         // Template dòng thêm tay nằm trong hàm addItem() phải có đủ panel tạo sản phẩm
         $start = strpos($html, 'function addItem()');
         $this->assertNotFalse($start, 'Không tìm thấy hàm addItem()');

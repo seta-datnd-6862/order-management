@@ -243,12 +243,6 @@
                     <h2 class="font-semibold text-gray-800">
                         <i class="fas fa-box mr-2 text-indigo-600"></i>Sản phẩm
                     </h2>
-                    @unless($isCreated)
-                    <button type="button" id="addItemBtn"
-                            class="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
-                        <i class="fas fa-plus mr-1"></i>Thêm dòng
-                    </button>
-                    @endunless
                 </div>
 
                 <div id="itemsContainer" class="space-y-4">
@@ -423,6 +417,13 @@
                     </div>
                     @endforeach
                 </div>
+
+                @unless($isCreated)
+                <button type="button" id="addItemBtn"
+                        class="mt-4 w-full px-4 py-2.5 border-2 border-dashed border-green-400 text-green-700 rounded-lg hover:bg-green-50 hover:border-green-500 text-sm font-medium">
+                    <i class="fas fa-plus mr-1"></i>Thêm dòng
+                </button>
+                @endunless
             </div>
         </div>
 
